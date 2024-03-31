@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "exclude": [
-    "Foot-ProStats-Vue/node_modules", "dist"]
-}
