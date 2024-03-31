@@ -6,8 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-../Flask/.env
-node_modules
+Flask/.env
+FootStatsPro/node_modules
+FootStatsPro/.vscode
 .DS_Store
 dist
 dist-ssr
