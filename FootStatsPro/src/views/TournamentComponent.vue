@@ -24,7 +24,7 @@
   <li v-for="(tournament, index) in tournaments" :key="index">
     {{ tournament[0] }} - Du {{ new Date(tournament[3]).toLocaleDateString() }} au {{ new Date(tournament[4]).toLocaleDateString() }} -
     {{ tournament[2] }} équipes - Lieu: {{ tournament[1] }}
-    <button @click="deleteTournaments(index)">Supprimer</button>
+    <button @click="deleteTournaments(tournament[0])">Supprimer</button>
   </li>
 </ul>
 
@@ -68,10 +68,22 @@ const addTournament = async () => {
     };
 
     try {
-      await postTournament(tournament);
+      const data = await postTournament(tournament);
 
-      tournaments.value.push(tournament);
+      // Assuming data.tournoi_id is available immediately after a successful post
+      if (data && data.tournoi_id) {
+        // Temporarily add the tournament to the local state for immediate feedback
+        tournament.tournoi_id = data.tournoi_id;
+        tournaments.value.push({ ...tournament, tournoi_id: data.tournoi_id });
+        console.log("Tournament added successfully:", data);
 
+        // Optionally, refresh the list from the server to ensure synchronization
+        await fetchTournamentsFromServer();
+      } else {
+        console.error("Tournament ID not received:", data);
+      }
+
+      // Reset the form fields
       newTournament.value = {
         name: '',
         startDate: '',
@@ -80,17 +92,33 @@ const addTournament = async () => {
         location: ''
       };
 
-
-      fetchTournamentsFromServer();
     } catch (error) {
-      console.error('Erreur lors de l\'ajout du tournoi:', error);
+      console.error("Error adding tournament:", error);
     }
+  }
+};
+;
+
+
+
+const deleteTournaments = async (tournamentId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/delete-tournament/${tournamentId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      // Remove the tournament with the matching ID from the local state
+      tournaments.value = tournaments.value.filter(t => t.tournoi_id !== tournamentId);
+      await fetchTournamentsFromServer();
+    } else {
+      console.error('Failed to delete the tournament');
+    }
+  } catch (error) {
+    console.error('Error during deletion:', error);
   }
 }
 
-const deleteTournaments = (index) => {
-  tournaments.value.splice(index, 1)
-}
 
 async function postTournament(tournament) {
   const postUrl = 'http://localhost:5000/add-tournaments';
@@ -106,12 +134,23 @@ async function postTournament(tournament) {
       })
     });
 
+    if (!response.ok) {
+      // If the response is not OK, throw an error with the response status
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-    console.log(data);
+    console.log("Response data:", data);
+
+    // Return the data so it can be used by the caller
+    return data;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi du tournoi:', error);
+    console.error('Error sending tournament:', error);
+    // Rethrow the error to ensure the caller can catch and handle it
+    throw error;
   }
 }
+
 
 const fetchTournamentsFromServer = async () => {
   try {
