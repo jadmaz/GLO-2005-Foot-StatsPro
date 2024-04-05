@@ -27,21 +27,42 @@
     <button @click="deleteTournaments(tournament[0])">Supprimer</button>
   </li>
 </ul>
-
-
-
+  <div>
+    <h2>Équipes</h2>
+    <ul>
+      <li v-for="team in teams" :key="team.id">
+        {{ team.nom }} - {{ team.pays }}
+      </li>
+    </ul>
   </div>
+<div v-if="Object.keys(bracket).length">
+  <h2>Bracket Structure</h2>
+  <div v-for="(matches, round) in bracket" :key="round">
+    <h3>{{ round }}</h3>
+    <ul>
+      <!-- Adjusted to handle team objects -->
+      <li v-for="(match, index) in matches" :key="index">
+        Match {{ index + 1 }}:
+        Team {{ match[0].nom }} vs Team {{ match[1].nom }}
+      </li>
+    </ul>
+  </div>
+</div>
+</div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 
 const tournaments = ref([]);
+const teams = ref([]);
 const cities = ref([
   { name: 'Tokyo', country: 'Japan' },
   { name: 'New York City', country: 'USA' },
   { name: 'Paris', country: 'France' }
 ]);
+const bracket = ref({});
+
 
 const newTournament = ref({
   name: '',
@@ -69,16 +90,14 @@ const addTournament = async () => {
 
     try {
       const data = await postTournament(tournament);
-
-      // Assuming data.tournoi_id is available immediately after a successful post
       if (data && data.tournoi_id) {
-        // Temporarily add the tournament to the local state for immediate feedback
-        tournament.tournoi_id = data.tournoi_id;
-        tournaments.value.push({ ...tournament, tournoi_id: data.tournoi_id });
         console.log("Tournament added successfully:", data);
 
-        // Optionally, refresh the list from the server to ensure synchronization
+        // Fetch the latest list of tournaments from the server,
+        // which now includes the newly added tournament.
         await fetchTournamentsFromServer();
+
+        await fetchBracket(data.tournoi_id, tournament.teamCount);
       } else {
         console.error("Tournament ID not received:", data);
       }
@@ -97,7 +116,10 @@ const addTournament = async () => {
     }
   }
 };
-;
+
+
+
+
 
 
 
@@ -122,7 +144,6 @@ const deleteTournaments = async (tournamentId) => {
 
 async function postTournament(tournament) {
   const postUrl = 'http://localhost:5000/add-tournaments';
-
   try {
     const response = await fetch(postUrl, {
       method: 'POST',
@@ -138,7 +159,6 @@ async function postTournament(tournament) {
       // If the response is not OK, throw an error with the response status
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
     const data = await response.json();
     console.log("Response data:", data);
 
@@ -151,6 +171,21 @@ async function postTournament(tournament) {
   }
 }
 
+const getTeams = async() => {
+  console.log("fetching teams");
+  try{
+    const response = await fetch('http://localhost:5000/equipe')
+    if(!response.ok){
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("teams fetched succesfully", data)
+    teams.value = data.teams ;
+  }
+  catch (error){
+    console.error("fetching failed");
+  }
+};
 
 const fetchTournamentsFromServer = async () => {
   try {
@@ -162,7 +197,23 @@ const fetchTournamentsFromServer = async () => {
   }
 }
 
+const fetchBracket = async (tournamentId, numberOfTeams) => {
+  try {
+    const response = await fetch(`http://localhost:5000/organize-tournament/${tournamentId}/${numberOfTeams}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch bracket structure');
+    }
+    const data = await response.json();
+    console.log("Fetched Bracket Structure:", data); // Debug output
+    bracket.value = data;
+  } catch (error) {
+    console.error('Error fetching bracket structure:', error);
+  }
+};
+
+
 onMounted(() => {
   fetchTournamentsFromServer();
+  getTeams();
 });
 </script>

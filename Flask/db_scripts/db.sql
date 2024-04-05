@@ -26,9 +26,11 @@ CREATE TABLE IF NOT EXISTS Partie (
     resultat VARCHAR(50),
     equipe_locale_id INT,
     equipe_visiteur_id INT,
+    tournoi_id INT,
     PRIMARY KEY (match_id),
     FOREIGN KEY (equipe_locale_id) REFERENCES Equipe(equipe_id),
-    FOREIGN KEY (equipe_visiteur_id) REFERENCES Equipe(equipe_id)
+    FOREIGN KEY (equipe_visiteur_id) REFERENCES Equipe(equipe_id),
+    FOREIGN KEY (tournoi_id) REFERENCES tournoi(tournoi_id)
 );
 CREATE TABLE IF NOT EXISTS Classement (
     classement_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,7 +74,11 @@ INSERT INTO Equipe (equipe_id, nom, pays, entraineur_principal, stade_domicile) 
 (2, 'Real Madrid', 'Spain', 'Carlo Ancelotti', 'Santiago Bernabeu'),
 (3, 'Paris Saint-Germain', 'France', 'Mauricio Pochettino', 'Parc des Princes'),
 (4, 'Manchester City', 'England', 'Pep Guardiola', 'Etihad Stadium'),
-(5, 'Liverpool FC', 'England', 'Jurgen Klopp', 'Anfield');
+(5, 'Liverpool FC', 'England', 'Jurgen Klopp', 'Anfield'),
+(6, 'AC Milan', 'Italy', 'Stefano Pioli', 'San Siro'),
+(7, 'Borussia Dortmund', 'Germany', 'Edin Terzic', 'Signal Iduna Park'),
+(8, 'Ajax Amsterdam', 'Netherlands', 'Erik ten Hag', 'Johan Cruyff Arena');
+
 
 
 INSERT INTO Joueur (nom, age, position, equipe_id) VALUES

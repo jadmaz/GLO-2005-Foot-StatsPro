@@ -44,6 +44,31 @@ def select_tournaments():
 
 
 def select_teams():
+    connection, cursor = _open_sql_connection();
+    query = "SELECT equipe_id, nom, pays, entraineur_principal, stade_domicile FROM Equipe"
+    cursor.execute(query)
+    teams = [{
+        'id': row[0],
+        'nom': row[1],
+        'pays': row[2],
+        'entraineur_principal': row[3],
+        'stade_domicile': row[4]
+    } for row in cursor.fetchall()]
+    connection.close()
+    return teams
+
+
+def create_match(tournament_id, team1_id, team2_id, round):
+    connection, cursor = _open_sql_connection()
+    cursor.execute("INSERT INTO Parties (tournament_id, team1_id, team2_id, round) VALUES (%s, %s, %s, %s)",
+                   (tournament_id, team1_id, team2_id, round))
+    match_id = connection.insert_id()
+    connection.commit()
+    connection.close()
+    return match_id
+
+
+def select_teams_and_players():
     connection, cursor = _open_sql_connection()
     query = """
     SELECT 

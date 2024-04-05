@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from database import insert_tournaments, select_tournaments, delete_tournament, select_teams
+
+from Flask.serverFunctions import organize_tournament
+from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams
 
 app = Flask(__name__)
 CORS(app)
@@ -18,6 +20,7 @@ def add_tournaments():
         start_date = new_tournament_data.get("startDate")
         end_date = new_tournament_data.get("endDate")
         tournoi_id = insert_tournaments(name, location, team_count, start_date, end_date)
+        organize_tournament(tournoi_id, new_tournament_data['teamCount'])
 
         response = {
             "status": 200,
@@ -42,6 +45,22 @@ def get_tournaments():
 def get_teams():
     teams = select_teams()
     return jsonify({"teams": teams})
+
+
+@app.route("/equipe", methods=['GET'])
+def get_teams_and_players():
+    teams = select_teams_and_players()
+    return jsonify({"teams": teams})
+
+
+@app.route("/organize-tournament/<int:tournament_id>/<int:number_of_teams>", methods=['GET'])
+def get_tournament_bracket(tournament_id, number_of_teams):
+    try:
+        # Assuming `organize_tournament` returns the bracket structure
+        bracket = organize_tournament(tournament_id, number_of_teams)
+        return jsonify(bracket), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @app.route('/delete-tournament/<int:tournament_id>', methods=['DELETE'])
