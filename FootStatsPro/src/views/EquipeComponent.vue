@@ -17,15 +17,11 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-
 const equipes = ref([]);
-
 const processTeamsData = (rawData) => {
   const teamsMap = new Map();
-
   rawData.forEach((teamData) => {
     const [equipeId, equipeNom, pays, entraineurPrincipal, stadeDomicile, joueurId, joueurNom, joueurAge, joueurPosition] = teamData;
-
     if (!teamsMap.has(equipeId)) {
       teamsMap.set(equipeId, {
         id: equipeId,
@@ -36,7 +32,6 @@ const processTeamsData = (rawData) => {
         joueurs: [],
       });
     }
-
     if (joueurId && joueurNom) {
       const player = {
         id: joueurId,
@@ -47,14 +42,12 @@ const processTeamsData = (rawData) => {
       teamsMap.get(equipeId).joueurs.push(player);
     }
   });
-
   return Array.from(teamsMap.values());
 };
-
 const fetchTeamsFromServer = async () => {
   console.log("Fetching teams from server...");
   try {
-    const response = await fetch('http://localhost:5000/equipe');
+    const response = await fetch('http://localhost:5000/equipes_and_players');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -65,10 +58,7 @@ const fetchTeamsFromServer = async () => {
     console.error('Error fetching teams:', error);
   }
 };
-
 onMounted(fetchTeamsFromServer);
-
-
 </script>
 
 <style>
@@ -76,11 +66,9 @@ onMounted(fetchTeamsFromServer);
   margin-top : 20px;
   display: flex;
   flex-wrap: wrap;
-
   gap: 20px;
   justify-content: center;
 }
-
 .equipe {
   background-color: #f3f3f3;
   border: 1px solid #ddd;
@@ -90,27 +78,22 @@ onMounted(fetchTeamsFromServer);
   width: 300px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
 .equipe h2 {
   color: #333;
   margin-bottom: 10px;
 }
-
 .equipe p {
   color: #666;
   margin-bottom: 5px;
 }
-
 .equipe:hover {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* L'ombre s'affiche lors du survol */
 }
-
 .joueurs-liste {
   list-style-type: none;
   padding: 0;
   margin-top: 10px;
 }
-
 .joueurs-liste li {
   background-color: white;
   margin-bottom: 5px;

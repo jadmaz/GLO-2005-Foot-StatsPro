@@ -47,7 +47,7 @@ def get_teams():
     return jsonify({"teams": teams})
 
 
-@app.route("/equipe", methods=['GET'])
+@app.route("/equipes_and_players", methods=['GET'])
 def get_teams_and_players():
     teams = select_teams_and_players()
     return jsonify({"teams": teams})

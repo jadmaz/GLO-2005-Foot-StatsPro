@@ -35,19 +35,21 @@
       </li>
     </ul>
   </div>
-<div v-if="Object.keys(bracket).length">
-  <h2>Bracket Structure</h2>
-  <div v-for="(matches, round) in bracket" :key="round">
-    <h3>{{ round }}</h3>
-    <ul>
-      <!-- Adjusted to handle team objects -->
-      <li v-for="(match, index) in matches" :key="index">
-        Match {{ index + 1 }}:
-        Team {{ match[0].nom }} vs Team {{ match[1].nom }}
-      </li>
-    </ul>
+  <div v-if="Object.keys(bracket).length">
+    <h2>Bracket Structure</h2>
+    <div class="bracket">
+      <div class="rounds" v-for="(matches, round) in bracket" :key="round">
+        <h3>{{ round }}</h3>
+        <div class="matches">
+          <div class="match" v-for="(match, index) in matches" :key="index">
+            <div class="team">{{ match[0].nom }}</div>
+            <div class="vs">vs</div>
+            <div class="team">{{ match[1].nom }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 </div>
 </template>
 
@@ -217,3 +219,28 @@ onMounted(() => {
   getTeams();
 });
 </script>
+
+<style scoped>
+.bracket {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+}
+.rounds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
+}
+.matches {
+  margin-bottom: 50px;
+}
+.match {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+.team {
+  margin: 0 10px;
+}
+</style>
