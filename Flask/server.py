@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
-from Flask.serverFunctions import organize_tournament
-from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams
+from Flask.serverFunctions import organize_tournament, update_bracket_with_results
+from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, \
+    insert_match, select_matches, update_match_result, fetch_match_results
 
 app = Flask(__name__)
 CORS(app)
@@ -53,6 +54,44 @@ def get_teams_and_players():
     return jsonify({"teams": teams})
 
 
+@app.route("/create-match", methods=['POST'])
+def create_match():
+    data = request.json
+    tournament_id = data['tournamentId']
+    home_team_id = data['homeTeamId']
+    visitor_team_id = data['visitorTeamId']
+
+    match_id = insert_match(tournament_id, home_team_id, visitor_team_id)
+
+    return jsonify({"matchId": match_id}), 200
+
+
+@app.route("/matches/<int:tournament_id>", methods=['GET'])
+def get_matches(tournament_id):
+    matches = select_matches(tournament_id)
+    return jsonify(matches)
+
+
+@app.route("/matches/results/<int:tournament_id>", methods=['GET'])
+def get_match_results(tournament_id):
+    try:
+        results = fetch_match_results(tournament_id)
+        return jsonify(results), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/play-match/<int:match_id>', methods=['POST'])
+def play_match(match_id):
+    data = request.json
+    home_team_score = int(data['homeTeamScore'])
+    visitor_team_score = int(data['visitorTeamScore'])
+
+    update_match_result(match_id, home_team_score, visitor_team_score)
+
+    return jsonify({"message": "Match updated successfully"}), 200
+
+
 @app.route("/organize-tournament/<int:tournament_id>/<int:number_of_teams>", methods=['GET'])
 def get_tournament_bracket(tournament_id, number_of_teams):
     try:
@@ -67,6 +106,30 @@ def get_tournament_bracket(tournament_id, number_of_teams):
 def remove_tournament(tournament_id):
     delete_tournament(tournament_id)
     return jsonify({'status': 'success', 'message': 'Tournament deleted'})
+
+
+@app.route('/update-bracket/<int:tournament_id>', methods=['POST'])
+def api_update_bracket(tournament_id):
+    print(tournament_id)
+    data = request.get_json()
+    print("bracket structure", data)
+
+    # Extract the bracket structure from the request
+    bracket_structure = data['bracket']
+
+    # Fetch the latest match results for the tournament
+    match_results = fetch_match_results(tournament_id)
+    print("match results", match_results)
+
+    # Ensure the match results are properly formatted
+    if match_results is None:
+        return jsonify({"error": "Unable to retrieve match results"}), 400
+
+    # Update the bracket based on the match results
+    updated_bracket_structure = update_bracket_with_results(bracket_structure, match_results)
+
+    # Return the updated bracket structure as a response
+    return jsonify(updated_bracket_structure), 200
 
 
 if __name__ == '__main__':

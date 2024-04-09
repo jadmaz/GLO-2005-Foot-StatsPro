@@ -19,6 +19,15 @@ equipe_id INT,
 FOREIGN KEY (equipe_id) REFERENCES Equipe(equipe_id)
 );
 
+CREATE TABLE IF NOT EXISTS tournoi (
+    tournoi_id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100),
+    lieu VARCHAR(100),
+    nb_equipe integer,
+    date_de_debut DATE,
+    date_de_fin DATE
+);
+
 CREATE TABLE IF NOT EXISTS Partie (
     match_id INT AUTO_INCREMENT,
     date DATE,
@@ -27,6 +36,7 @@ CREATE TABLE IF NOT EXISTS Partie (
     equipe_locale_id INT,
     equipe_visiteur_id INT,
     tournoi_id INT,
+    winner VARCHAR(50),
     PRIMARY KEY (match_id),
     FOREIGN KEY (equipe_locale_id) REFERENCES Equipe(equipe_id),
     FOREIGN KEY (equipe_visiteur_id) REFERENCES Equipe(equipe_id),
@@ -52,15 +62,6 @@ CREATE TABLE IF NOT EXISTS Statistiques (
     fautes INT,
     FOREIGN KEY (joueur_id) REFERENCES Joueur(joueur_id),
     FOREIGN KEY (match_id) REFERENCES Partie(match_id)
-);
-
-CREATE TABLE IF NOT EXISTS tournoi (
-    tournoi_id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100),
-    lieu VARCHAR(100),
-    nb_equipe integer,
-    date_de_debut DATE,
-    date_de_fin DATE
 );
 
 INSERT INTO tournoi (nom, lieu, nb_equipe, date_de_debut, date_de_fin)
@@ -137,6 +138,8 @@ INSERT INTO Classement (saison, equipe_id, position, nombre_de_victoires, nombre
 ('2023-2024', 4, 4, 23, 11),
 ('2023-2024', 5, 5, 20, 14);
 
+
+SELECT * FROM Partie;
 
 DROP TABLE Statistiques;
 DROP TABLE Joueur;

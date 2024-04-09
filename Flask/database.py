@@ -87,6 +87,89 @@ def select_teams_and_players():
     return teams
 
 
+def insert_match(tournament_id, home_team_id, visitor_team_id):
+    connection, cursor = _open_sql_connection()
+    sql_query = """
+        INSERT INTO Partie (tournoi_id, equipe_locale_id, equipe_visiteur_id, date, lieu)
+        VALUES (%s, %s, %s, '2024-05-20', 'Stade par défaut')
+    """
+    cursor.execute(sql_query, (tournament_id, home_team_id, visitor_team_id))
+    match_id = cursor.lastrowid
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return match_id
+
+
+def select_matches(tournament_id):
+    connection, cursor = _open_sql_connection()
+    sql_query = """
+    SELECT match_id, date, lieu, equipe_locale_id, equipe_visiteur_id, tournoi_id
+    FROM Partie
+    WHERE tournoi_id = %s
+    ORDER BY date;
+    """
+    cursor.execute(sql_query, (tournament_id,))
+    matches = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return [{
+        'match_id': match[0],
+        'date': match[1],
+        'lieu': match[2],
+        'equipe_locale_id': match[3],
+        'equipe_visiteur_id': match[4],
+        'tournoi_id': match[5]
+    } for match in matches]
+
+
+def update_match_result(match_id, home_team_score, visitor_team_score):
+    if home_team_score > visitor_team_score:
+        winner = "home"
+    elif visitor_team_score > home_team_score:
+        winner = "away"
+    else:
+        winner = "draw"
+    # Format the score as a string e.g., "2-1"
+    score_resultat = f"{home_team_score}-{visitor_team_score}"
+
+    connection, cursor = _open_sql_connection()
+    try:
+        query = """
+            UPDATE Partie
+            SET resultat = %s, winner = %s
+            WHERE match_id = %s
+        """
+        cursor.execute(query, (score_resultat, winner, match_id))
+        connection.commit()
+    except Exception as e:
+        print(f"An error occurred while updating match result: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def fetch_match_results(tournament_id):
+    connection, cursor = _open_sql_connection()
+    query = """
+        SELECT match_id, equipe_locale_id, equipe_visiteur_id, winner
+        FROM Partie
+        WHERE tournoi_id = %s
+    """
+    cursor.execute(query, (tournament_id,))
+    results = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    # Transform the results into a format that includes team IDs and the winner
+    match_results = [{
+        "match_id": row[0],
+        "home_team_id": row[1],
+        "away_team_id": row[2],
+        "winner": row[3]
+    } for row in results]
+    return match_results
+
+
 def delete_tournament(tournament_id):
     connection, cursor = _open_sql_connection()
     cursor.execute("DELETE FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
