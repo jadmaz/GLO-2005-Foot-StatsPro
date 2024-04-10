@@ -71,6 +71,7 @@
 </template>
 
 
+
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final"]); // Now knownRounds is a reactive reference
@@ -234,7 +235,9 @@ const fetchBracket = async (tournamentId, numberOfTeams) => {
     }
     const data = await response.json();
     console.log("Fetched Bracket Structure:", data); // Debug output
-    bracket.value = data;
+     bracket.value = parseBracket(data);
+     console.log("bracket en json initial", (JSON.stringify(bracket)));
+     console.log("bracket en json initial", (JSON.stringify(bracket.value)));
   } catch (error) {
     console.error('Error fetching bracket structure:', error);
   }
@@ -318,15 +321,15 @@ const fetchMatchResults = async (tournamentId) => {
     return [];
   }
 };
-const updateBracketWithMatchResults = async (tournamentId, bracket) => {
+const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
   try {
     // Debug: Log the tournamentId and the initial state of the bracket
     console.log('Tournament ID:', tournamentId);
-    console.log('Initial Bracket:', bracket);
+    console.log('Initial Bracket:', bracketData);
 
     const payload = {
       tournamentId,
-      bracket, // Send the current bracket structure as part of the request payload
+      bracket: bracketData, // Send the current bracket structure as part of the request payload
     };
 
     // Debug: Log the payload to ensure it's correctly structured
@@ -346,32 +349,45 @@ const updateBracketWithMatchResults = async (tournamentId, bracket) => {
     if (!response.ok) {
       throw new Error(`Failed to update bracket with match results. Status: ${response.status}`);
     }
-    const data = await response.json();
-    console.log(data)
-    const updatedBracket = reformatBracket(data);
-    console.log(updatedBracket);
-    bracket.value = updatedBracket;
-    console.log("est ce un proxy", bracket.value)
-    updateKey.value++;
-    console.log('Bracket successfully updated with match results:', updatedBracket);
+    const updatedData = await response.json();
+    let updatedBracket = parseBracket(updatedData);
+    console.log('Updated Bracket:', updatedBracket);
+    bracket.value = updatedBracket; // Update bracket with new structure
+
+    console.log('Updated bracket value:', bracket.value);
+
+    // After updating the bracket, create new matches for the next round
+    for (const [round, matchesArray] of Object.entries(updatedBracket)) {
+      console.log(`Creating matches for round: ${round}`, matchesArray);
+      for (const match of matchesArray) {
+        const homeTeamId = match[0]?.id;
+        const visitorTeamId = match[1]?.id;
+        if(homeTeamId && visitorTeamId) {
+          const date = "2024-01-01"; // Placeholder date, adjust as necessary
+          const place = "Example Venue"; // Placeholder venue, adjust as necessary
+          await createMatch(tournamentId, homeTeamId, visitorTeamId, round, date, place);
+        }
+      }
+    }
+
+    await fetchMatches(tournamentId); // Fetch updated matches
+    updateKey.value++; // Trigger UI updates if necessary
   } catch (error) {
-    console.error('Error updating bracket:', error);
+    console.error('Error updating bracket with match results:', error);
   }
 };
 
-function reformatBracket(updatedBracket) {
-  const formatted = {};
-  for (const round of Object.keys(updatedBracket)) {
-    formatted[round] = updatedBracket[round].map(match => {
-      // If the match is an array of arrays, flatten it into a single array
-      if (Array.isArray(match[0])) {
-        return match.flat();
-      }
-      return match;
-    });
-  }
-  return formatted;
+
+function parseBracket(rawBracket) {
+  // Normalize the rawBracket to only include the rounds you need
+  const normalizedBracket = {};
+  knownRounds.value.forEach(round => {
+    normalizedBracket[round] = rawBracket[round] || [];
+  });
+  return normalizedBracket;
 }
+
+
 
 
 
