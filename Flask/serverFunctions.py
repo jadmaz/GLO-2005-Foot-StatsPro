@@ -25,12 +25,13 @@ def organize_tournament(tournament_id, number_of_teams):
 
     # Get the first round name from the bracket structure
     first_round_name = next(iter(bracket_structure))
+    print("first_round_name", first_round_name)
     first_round_matches = generate_first_round_matches(teams[:number_of_teams])
     print(f"First round matches: {first_round_matches}")
 
     # Assign matches to the first round in the bracket structure
     bracket_structure[first_round_name].extend(first_round_matches)
-
+    print("avant le retour:", bracket_structure)
     return bracket_structure
 
 
@@ -53,7 +54,8 @@ def initialize_bracket_structure(number_of_teams):
     rounds_names = rounds_names[-number_of_rounds:]
 
     bracket_structure = {round_name: [] for round_name in rounds_names}
-
+    print("roundnames", rounds_names)
+    print("bracket structure", bracket_structure)
     print(f"Structure de bracket initialisée avec les rounds: {list(bracket_structure.keys())}")
     return bracket_structure
 
@@ -66,63 +68,112 @@ def generate_first_round_matches(teams):
 
 
 def update_bracket_with_results(bracket_structure, match_results):
-    print("Début de la mise à jour du bracket avec les résultats des matchs.")
-    for round_name, matches in bracket_structure.items():
-        print(f"Traitement du round: {round_name}")
-        updated_matches = []  # Initialise une nouvelle liste pour stocker les matchs mis à jour
+    print("Starting update of the bracket with match results.")
+    bracket_structure = reorder_bracket(bracket_structure)
 
-        for match in matches:
-            # Assurez-vous que chaque 'match' est une liste de dictionnaires représentant les équipes
-            if not match or not isinstance(match, list) or not all(isinstance(team, dict) for team in match):
-                print("Format de match invalide.")
-                continue
+    # We only process rounds that have matches scheduled and ignore empty or future rounds.
+    rounds_to_process = [round_name for round_name, matches in bracket_structure.items() if matches]
 
-            # Identifier le match_id si présent
-            match_id = None
-            for m in match:
-                for result in match_results:
-                    if m['id'] == result['home_team_id'] or m['id'] == result['away_team_id']:
-                        match_id = result['match_id']
-                        break
-                if match_id:
-                    break
+    for round_name in rounds_to_process:
+        print(f"Processing round: {round_name}")
+        matches = bracket_structure[round_name]
+        winners = process_current_round(matches, match_results)
 
-            # Vérifier le résultat du match par son ID
-            if match_id:
-                result = next((r for r in match_results if r['match_id'] == match_id), None)
-                if result:
-                    # Trouver l'ID de l'équipe gagnante
-                    winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
-                    print(f"Équipe gagnante du match {match_id}: {winning_team_id}")
+        # Move winners to the next round only if it exists and it's empty.
+        next_round_name = find_next_round(round_name, bracket_structure)
+        if next_round_name and not bracket_structure[next_round_name]:
+            advance_winners_to_next_round(winners, next_round_name, bracket_structure)
 
-                    # Préparer l'équipe gagnante pour le prochain round
-                    next_round = find_next_round(round_name, bracket_structure)
-                    if next_round:
-                        winning_team_info = next(team for team in match if team['id'] == winning_team_id)
-                        updated_matches.append(winning_team_info)
-                        print(f"Placement de l'équipe gagnante {winning_team_id} dans le prochain round: {next_round}")
-                else:
-                    print(f"Aucun résultat trouvé pour le match {match_id}.")
-            else:
-                print("ID de match non trouvé.")
+        # Regardless of advancing, we clear the current round to signify its completion.
+        bracket_structure[round_name] = []
 
-        # Mettre à jour le bracket_structure avec les matchs du prochain round
-        if updated_matches:
-            bracket_structure[next_round] = updated_matches
-
-    print("Mise à jour du bracket terminée.")
-    print(bracket_structure)
+    return bracket_structure
 
 
+def process_current_round(matches, match_results):
+    winners = []
+    for match in matches:
+        for team in match:
+            # Find the match result that includes this team.
+            result = next((r for r in match_results if team['id'] in [r['home_team_id'], r['away_team_id']]), None)
+            if result:
+                winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
+                if team['id'] == winning_team_id:
+                    winners.append(team)  # Append the winner
+                    break  # Stop searching once the winner is found for this match.
+
+    return winners
+
+
+def advance_winners_to_next_round(winners, next_round_name, bracket_structure):
+    # Group winners into matches for the next round. Here, we assume 2 winners per match.
+    # This needs adjustment based on your actual game rules (e.g., single winner per match).
+    bracket_structure[next_round_name] = [[winners[i], winners[i + 1]] for i in range(0, len(winners), 2)]
+
+
+# Ensure all other helper functions like `find_next_round`, `reorder_bracket` are correctly implemented.
+
+
+def find_match_id(match, match_results):
+    # Function to find the match ID from match results
+    for team in match:
+        for result in match_results:
+            if team['id'] in [result['home_team_id'], result['away_team_id']]:
+                return result['match_id']
+    return None
+
+
+def find_winning_team_info(match, result):
+    # Function to find the winning team information
+    winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
+    return next((team for team in match if team['id'] == winning_team_id), None)
+
+
+def process_winners_for_next_round(winners, current_round, bracket_structure):
+    # Function to process winners and advance them to the next round
+    next_round_name = find_next_round(current_round, bracket_structure)
+    if next_round_name:
+        print(f"Next round after {current_round}: {next_round_name}")
+        # Only advance winners if the next round is not already filled
+        if not bracket_structure[next_round_name]:
+            bracket_structure[next_round_name].extend([winners])
+            print(f"Advancing winners to next round {next_round_name}: {bracket_structure[next_round_name]}")
+        else:
+            print(f"Next round {next_round_name} already has matches. No action taken.")
+    else:
+        print(f"No next round after {current_round}. Update complete.")
+
+    # Clear the current round's matches
+    bracket_structure[current_round] = []
+    print(f"Cleared matches from round {current_round}.")
+
+
+def reorder_bracket(bracket):
+    print("Starting reorder of the bracket.")
+    # Original bracket rounds
+    print("Original bracket structure:", bracket)
+
+    # Determine the order of rounds based on a predefined sequence for safety
+    predefined_order = ["1/16 Finals", "16 de finale", "Quarterfinals", "Semifinals", "Final"]
+    # Filter out rounds not present in the bracket
+    ordered_round_names = [round for round in predefined_order if round in bracket]
+
+    print("Predefined order of rounds:", predefined_order)
+    print("Rounds present in the current bracket:", ordered_round_names)
+
+    # Creating a new ordered bracket structure
+    ordered_bracket = {round_name: bracket[round_name] for round_name in ordered_round_names}
+
+    print("Bracket after reordering:", ordered_bracket)
+    return ordered_bracket
+
+
+# Remember to include the find_next_round function if not already defined
 def find_next_round(current_round, bracket_structure):
-    print(f"Recherche du prochain round après {current_round}.")
     rounds = list(bracket_structure.keys())
     current_index = rounds.index(current_round)
     if current_index + 1 < len(rounds):
-        next_round = rounds[current_index + 1]
-        print(f"Prochain round trouvé: {next_round}")
-        return next_round
-    print("Aucun prochain round trouvé.")
+        return rounds[current_index + 1]
     return None
 
 

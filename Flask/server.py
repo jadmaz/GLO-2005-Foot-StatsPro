@@ -96,8 +96,10 @@ def play_match(match_id):
 def get_tournament_bracket(tournament_id, number_of_teams):
     try:
         # Assuming `organize_tournament` returns the bracket structure
+        print("getting tournament bracket: ", tournament_id)
         bracket = organize_tournament(tournament_id, number_of_teams)
-        return jsonify(bracket), 200
+        print("avant le retour du FETCH", bracket)
+        return bracket, 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -127,6 +129,7 @@ def api_update_bracket(tournament_id):
 
     # Update the bracket based on the match results
     updated_bracket_structure = update_bracket_with_results(bracket_structure, match_results)
+    print("le bon", updated_bracket_structure)
 
     # Return the updated bracket structure as a response
     return jsonify(updated_bracket_structure), 200
@@ -134,3 +137,4 @@ def api_update_bracket(tournament_id):
 
 if __name__ == '__main__':
     app.run()
+

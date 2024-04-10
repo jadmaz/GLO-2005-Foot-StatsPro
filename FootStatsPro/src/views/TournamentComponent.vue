@@ -2,7 +2,9 @@
   <div>
     <h2>Gestion des tournois</h2>
 
+    <!-- Form to add a new tournament -->
     <form @submit.prevent="addTournament">
+      <!-- Input fields for tournament details -->
       <label>Nom du tournoi:</label>
       <input type="text" v-model="newTournament.name" required />
       <label>Date de début:</label>
@@ -20,45 +22,59 @@
       <button type="submit">Ajouter</button>
     </form>
 
+    <!-- List of tournaments -->
     <ul>
-  <li v-for="(tournament, index) in tournaments" :key="index">
-    {{ tournament[0] }} - Du {{ new Date(tournament[3]).toLocaleDateString() }} au {{ new Date(tournament[4]).toLocaleDateString() }} -
-    {{ tournament[2] }} équipes - Lieu: {{ tournament[1] }}
-    <button @click="deleteTournaments(tournament[0])">Supprimer</button>
-  </li>
-</ul>
-  <div>
-    <h2>Équipes</h2>
-    <ul>
-      <li v-for="team in teams" :key="team.id">
-        {{ team.nom }} - {{ team.pays }}
+      <li v-for="(tournament, index) in tournaments" :key="index">
+        {{ tournament[0] }} - Du {{ new Date(tournament[3]).toLocaleDateString() }} au {{ new Date(tournament[4]).toLocaleDateString() }} -
+        {{ tournament[2] }} équipes - Lieu: {{ tournament[1] }}
+        <button @click="deleteTournaments(tournament[0])">Supprimer</button>
       </li>
     </ul>
-  </div>
-<div v-if="Object.keys(bracket).length">
+
+    <!-- List of teams -->
+    <div>
+      <h2>Équipes</h2>
+      <ul>
+        <li v-for="team in teams" :key="team.id">
+          {{ team.nom }} - {{ team.pays }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- Bracket Structure -->
+   <div v-if="Object.keys(bracket).length">
   <h2>Bracket Structure</h2>
-  <div class="bracket">
-    <div class="rounds" v-for="(matches, round) in bracket" :key="round">
-      <h3>{{ round }}</h3>
-      <div class="matches">
-        <div class="match" v-for="(match, index) in matches" :key="index">
-          <div class="team">{{ match[0].nom }}</div>
-          <div class="vs">vs</div>
-          <div class="team">{{ match[1].nom }}</div>
-          <button @click="playMatch(match, matches)">Play</button>
+  <div class="bracket" :key="updateKey">
+    <div v-for="(matches, roundName) in bracket" :key="roundName">
+      <div class="rounds">
+        <h3>{{ roundName }}</h3>
+        <div class="matches">
+          <!-- Iterating over matches in each round -->
+          <div v-for="(match, index) in matches" :key="index">
+            <div class="match">
+              <div class="team">{{ match[0]?.nom || 'TBD' }}</div>
+              <div class="vs">vs</div>
+              <div class="team">{{ match[1]?.nom || 'TBD' }}</div>
+              <button v-if="match[0] && match[1]" @click="playMatch(match)">Play</button>
+            </div>
+          </div>
+          <!-- If no matches scheduled for the round -->
+          <div v-if="!matches.length">No matches scheduled for {{ roundName }}</div>
         </div>
       </div>
     </div>
   </div>
-  <!-- Generate Next Round Button -->
-  <button @click="updateBracketWithMatchResults(currentTournamentId, bracket)">Generate Next Round</button>
-</div>
-</div>
+  <!-- Button to generate the next round -->
+    <button @click="updateBracketWithMatchResults(currentTournamentId, bracket)">Generate Next Round</button>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
 
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final"]); // Now knownRounds is a reactive reference
+const updateKey = ref(0);
 const tournaments = ref([]);
 const teams = ref([]);
 const matches = ref([]);
@@ -69,8 +85,6 @@ const cities = ref([
 ]);
 const bracket = ref({});
 const currentTournamentId = ref(null); // Initialize currentTournamentId
-
-
 
 const newTournament = ref({
   name: '',
@@ -107,6 +121,7 @@ const addTournament = async () => {
         await fetchTournamentsFromServer();
 
         await fetchBracket(data.tournoi_id, tournament.teamCount);
+        console.log("VOICI LE BRACKET", bracket.value)
         for (const [round, matches] of Object.entries(bracket.value)) {
          for (const match of matches) {
           const homeTeamId = match[0].id;
@@ -331,19 +346,32 @@ const updateBracketWithMatchResults = async (tournamentId, bracket) => {
     if (!response.ok) {
       throw new Error(`Failed to update bracket with match results. Status: ${response.status}`);
     }
-
-    const updatedBracket = await response.json(); // Receive the updated bracket structure
-
-    // Debug: Log the updated bracket to verify changes
-    console.log('Updated Bracket:', updatedBracket);
-
+    const data = await response.json();
+    console.log(data)
+    const updatedBracket = reformatBracket(data);
+    console.log(updatedBracket);
     bracket.value = updatedBracket;
-    setcur// Assuming you're using Vue and have a reactive variable for the bracket
+    console.log("est ce un proxy", bracket.value)
+    updateKey.value++;
     console.log('Bracket successfully updated with match results:', updatedBracket);
   } catch (error) {
     console.error('Error updating bracket:', error);
   }
 };
+
+function reformatBracket(updatedBracket) {
+  const formatted = {};
+  for (const round of Object.keys(updatedBracket)) {
+    formatted[round] = updatedBracket[round].map(match => {
+      // If the match is an array of arrays, flatten it into a single array
+      if (Array.isArray(match[0])) {
+        return match.flat();
+      }
+      return match;
+    });
+  }
+  return formatted;
+}
 
 
 
