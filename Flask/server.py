@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 from Flask.serverFunctions import organize_tournament, update_bracket_with_results
 from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, \
-    insert_match, select_matches, update_match_result, fetch_match_results
+    insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id
 
 app = Flask(__name__)
 CORS(app)
@@ -110,6 +110,12 @@ def remove_tournament(tournament_id):
     return jsonify({'status': 'success', 'message': 'Tournament deleted'})
 
 
+@app.route("/tournaments/<tournament_id>", methods=['GET'])
+def get_tournament_by_id(tournament_id):
+    tournament = select_tournament_by_id(tournament_id)
+    return jsonify({"tournament": tournament})
+
+
 @app.route('/update-bracket/<int:tournament_id>', methods=['POST'])
 def api_update_bracket(tournament_id):
     print(tournament_id)
@@ -135,6 +141,10 @@ def api_update_bracket(tournament_id):
     return jsonify(updated_bracket_structure), 200
 
 
+def updatedatabase(tournamentid, winner):
+    # logique d'updating du database avec le winner
+    pass
+
+
 if __name__ == '__main__':
     app.run()
-

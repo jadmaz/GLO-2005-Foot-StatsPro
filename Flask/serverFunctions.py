@@ -70,8 +70,8 @@ def generate_first_round_matches(teams):
 def update_bracket_with_results(bracket_structure, match_results):
     print("Starting update of the bracket with match results.")
     bracket_structure = reorder_bracket(bracket_structure)
+    bracket_structure['Winner'] = None
 
-    # We only process rounds that have matches scheduled and ignore empty or future rounds.
     rounds_to_process = [round_name for round_name, matches in bracket_structure.items() if matches]
 
     for round_name in rounds_to_process:
@@ -79,12 +79,14 @@ def update_bracket_with_results(bracket_structure, match_results):
         matches = bracket_structure[round_name]
         winners = process_current_round(matches, match_results)
 
-        # Move winners to the next round only if it exists and it's empty.
         next_round_name = find_next_round(round_name, bracket_structure)
-        if next_round_name and not bracket_structure[next_round_name]:
+        print(next_round_name)
+        if next_round_name and not bracket_structure[next_round_name] and next_round_name != "Winner":
             advance_winners_to_next_round(winners, next_round_name, bracket_structure)
+        elif winners:
+            bracket_structure['Winner'] = winners[0]
+            print(f"Winner of the tournament is: {bracket_structure['Winner']}")
 
-        # Regardless of advancing, we clear the current round to signify its completion.
         bracket_structure[round_name] = []
 
     return bracket_structure
@@ -99,23 +101,17 @@ def process_current_round(matches, match_results):
             if result:
                 winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
                 if team['id'] == winning_team_id:
-                    winners.append(team)  # Append the winner
-                    break  # Stop searching once the winner is found for this match.
+                    winners.append(team)
+                    break
 
     return winners
 
 
 def advance_winners_to_next_round(winners, next_round_name, bracket_structure):
-    # Group winners into matches for the next round. Here, we assume 2 winners per match.
-    # This needs adjustment based on your actual game rules (e.g., single winner per match).
     bracket_structure[next_round_name] = [[winners[i], winners[i + 1]] for i in range(0, len(winners), 2)]
 
 
-# Ensure all other helper functions like `find_next_round`, `reorder_bracket` are correctly implemented.
-
-
 def find_match_id(match, match_results):
-    # Function to find the match ID from match results
     for team in match:
         for result in match_results:
             if team['id'] in [result['home_team_id'], result['away_team_id']]:
@@ -124,17 +120,14 @@ def find_match_id(match, match_results):
 
 
 def find_winning_team_info(match, result):
-    # Function to find the winning team information
     winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
     return next((team for team in match if team['id'] == winning_team_id), None)
 
 
 def process_winners_for_next_round(winners, current_round, bracket_structure):
-    # Function to process winners and advance them to the next round
     next_round_name = find_next_round(current_round, bracket_structure)
     if next_round_name:
         print(f"Next round after {current_round}: {next_round_name}")
-        # Only advance winners if the next round is not already filled
         if not bracket_structure[next_round_name]:
             bracket_structure[next_round_name].extend([winners])
             print(f"Advancing winners to next round {next_round_name}: {bracket_structure[next_round_name]}")
@@ -143,19 +136,16 @@ def process_winners_for_next_round(winners, current_round, bracket_structure):
     else:
         print(f"No next round after {current_round}. Update complete.")
 
-    # Clear the current round's matches
     bracket_structure[current_round] = []
     print(f"Cleared matches from round {current_round}.")
 
 
 def reorder_bracket(bracket):
     print("Starting reorder of the bracket.")
-    # Original bracket rounds
+
     print("Original bracket structure:", bracket)
 
-    # Determine the order of rounds based on a predefined sequence for safety
     predefined_order = ["1/16 Finals", "16 de finale", "Quarterfinals", "Semifinals", "Final"]
-    # Filter out rounds not present in the bracket
     ordered_round_names = [round for round in predefined_order if round in bracket]
 
     print("Predefined order of rounds:", predefined_order)

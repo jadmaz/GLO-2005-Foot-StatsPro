@@ -169,6 +169,13 @@ def fetch_match_results(tournament_id):
     } for row in results]
     return match_results
 
+def select_tournament_by_id(tournament_id):
+    connection, cursor = _open_sql_connection()
+    cursor.execute("SELECT * FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
+    tournament = cursor.fetchone()
+    connection.close()
+    return tournament
+
 
 def delete_tournament(tournament_id):
     connection, cursor = _open_sql_connection()

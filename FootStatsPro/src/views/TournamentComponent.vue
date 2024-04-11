@@ -1,10 +1,7 @@
 <template>
   <div>
     <h2>Gestion des tournois</h2>
-
-    <!-- Form to add a new tournament -->
     <form @submit.prevent="addTournament">
-      <!-- Input fields for tournament details -->
       <label>Nom du tournoi:</label>
       <input type="text" v-model="newTournament.name" required />
       <label>Date de début:</label>
@@ -12,69 +9,86 @@
       <label>Date de fin:</label>
       <input type="date" v-model="newTournament.endDate" required />
       <label>Nombre d'équipes:</label>
-      <input type="number" v-model="newTournament.teamCount" min="2" step="2" required />
+      <select v-model="newTournament.teamCount" required>
+        <option v-for="count in [2, 4, 8, 16, 32]" :key="count" :value="count">{{ count }}</option>
+      </select>
       <label>Lieu:</label>
       <select v-model="newTournament.location" required>
-        <option v-for="(city, index) in cities" :key="index" :value="city.name">
-          {{ city.name }}
-        </option>
+        <option v-for="(city, index) in cities" :key="index" :value="city.name">{{ city.name }}</option>
       </select>
       <button type="submit">Ajouter</button>
     </form>
 
-    <!-- List of tournaments -->
-    <ul>
-      <li v-for="(tournament, index) in tournaments" :key="index">
-        {{ tournament[0] }} - Du {{ new Date(tournament[3]).toLocaleDateString() }} au {{ new Date(tournament[4]).toLocaleDateString() }} -
-        {{ tournament[2] }} équipes - Lieu: {{ tournament[1] }}
-        <button @click="deleteTournaments(tournament[0])">Supprimer</button>
-      </li>
-    </ul>
-
-    <!-- List of teams -->
-    <div>
-      <h2>Équipes</h2>
-      <ul>
-        <li v-for="team in teams" :key="team.id">
-          {{ team.nom }} - {{ team.pays }}
-        </li>
-      </ul>
-    </div>
-
-    <!-- Bracket Structure -->
-   <div v-if="Object.keys(bracket).length">
-  <h2>Bracket Structure</h2>
-  <div class="bracket" :key="updateKey">
-    <div v-for="(matches, roundName) in bracket" :key="roundName">
-      <div class="rounds">
-        <h3>{{ roundName }}</h3>
-        <div class="matches">
-          <!-- Iterating over matches in each round -->
-          <div v-for="(match, index) in matches" :key="index">
-            <div class="match">
-              <div class="team">{{ match[0]?.nom || 'TBD' }}</div>
-              <div class="vs">vs</div>
-              <div class="team">{{ match[1]?.nom || 'TBD' }}</div>
-              <button v-if="match[0] && match[1]" @click="playMatch(match)">Play</button>
+    <div v-if="Object.keys(bracket).length">
+      <h2>Bracket Structure</h2>
+      <div class="bracket" :key="updateKey">
+        <div v-for="(matches, roundName) in bracket" :key="roundName">
+          <template v-if="roundName === 'Winner' && winner">
+            <div class="winner-info">
+              <h3>Winner: {{ bracket.Winner.nom }}</h3>
+              <p>Coach: {{ bracket.Winner.entraineur_principal }}</p>
+              <p>Country: {{ bracket.Winner.pays }}</p>
+              <p>Home Stadium: {{ bracket.Winner.stade_domicile }}</p>
             </div>
+          </template>
+          <div v-else class="rounds">
+            <template v-if="roundName !== 'Winner'">
+            <h3>{{ roundName }}</h3>
+            <div class="matches">
+              <div v-for="(match, index) in matches" :key="index">
+                <div class="match">
+                  <div class="team">{{ match[0]?.nom || 'TBD' }}</div>
+                  <div class="vs">vs</div>
+                  <div class="team">{{ match[1]?.nom || 'TBD' }}</div>
+                  <button v-if="match[0] && match[1] && !match.played" @click="playMatch(match)">
+                    Play
+                  </button>
+                </div>
+              </div>
+              <div v-if="!matches.length">No matches scheduled for {{ roundName }}</div>
+            </div>
+            <button
+              v-if="matches.length && roundName !== 'Final'"
+              @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
+              class="generate-next-round"
+            >
+              Generate Next Round
+            </button>
+            <button
+              v-if="matches.length && roundName === 'Final'"
+              @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
+              class="generate-next-round"
+            >
+              Conclude Tournament
+            </button>
+          </template>
           </div>
-          <!-- If no matches scheduled for the round -->
-          <div v-if="!matches.length">No matches scheduled for {{ roundName }}</div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- Button to generate the next round -->
-    <button @click="updateBracketWithMatchResults(currentTournamentId, bracket)">Generate Next Round</button>
-    </div>
+        <select v-model="selectedTournamentId" @change="fetchSelectedTournamentDetails">
+  <option value="" disabled>Sélectionner un tournoi</option>
+  <option v-for="(tournament, index) in tournaments" :key="tournament[0]" :value="tournament[0]">
+    {{ tournament[1] }}
+  </option>
+</select>
+<button v-if="showDeleteButton" @click="deleteTournaments(selectedTournamentId)">Supprimer</button>
+<header v-if="selectedTournament">
+      <h3>{{ selectedTournament[1] }}</h3>
+      <p>Du {{ new Date(selectedTournament[4]).toLocaleDateString() }} au {{ new Date(selectedTournament[5]).toLocaleDateString() }}</p>
+      <p>{{ selectedTournament[3] }} équipes</p>
+      <p>Lieu: {{ selectedTournament[2] }}</p>
+
+    </header>
   </div>
 </template>
 
 
 
+
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final"]); // Now knownRounds is a reactive reference
+const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final", "Winner"]); // Now knownRounds is a reactive reference
 const updateKey = ref(0);
 const tournaments = ref([]);
 const teams = ref([]);
@@ -84,9 +98,12 @@ const cities = ref([
   { name: 'New York City', country: 'USA' },
   { name: 'Paris', country: 'France' }
 ]);
+const showDeleteButton = ref(false);
+const selectedTournament = ref(null);
 const bracket = ref({});
+const winner = ref(null)
 const currentTournamentId = ref(null); // Initialize currentTournamentId
-
+const selectedTournamentId = ref(null);
 const newTournament = ref({
   name: '',
   startDate: '',
@@ -296,6 +313,7 @@ const playMatch = async (match) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ homeTeamScore, visitorTeamScore })
     });
+    match.played = true
 
     if (!response.ok) {
       throw new Error('Failed to play match');
@@ -323,16 +341,14 @@ const fetchMatchResults = async (tournamentId) => {
 };
 const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
   try {
-    // Debug: Log the tournamentId and the initial state of the bracket
     console.log('Tournament ID:', tournamentId);
     console.log('Initial Bracket:', bracketData);
 
     const payload = {
       tournamentId,
-      bracket: bracketData, // Send the current bracket structure as part of the request payload
+      bracket: bracketData,
     };
 
-    // Debug: Log the payload to ensure it's correctly structured
     console.log('Payload sent to server:', JSON.stringify(payload, null, 2));
 
     const response = await fetch(`http://localhost:5000/update-bracket/${tournamentId}`, {
@@ -340,43 +356,63 @@ const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload), // Convert the JavaScript object to a JSON string
+      body: JSON.stringify(payload),
     });
 
-    // Debug: Check the response status
     console.log('Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Failed to update bracket with match results. Status: ${response.status}`);
     }
     const updatedData = await response.json();
-    let updatedBracket = parseBracket(updatedData);
-    console.log('Updated Bracket:', updatedBracket);
-    bracket.value = updatedBracket; // Update bracket with new structure
+    console.log('Updated Bracket:', updatedData);
 
-    console.log('Updated bracket value:', bracket.value);
+    // Check if a winner has been determined
+    if (updatedData['Winner']) {
+      console.log(`Winner of the tournament is: ${updatedData['Winner'].nom}`);
+      winner.value = updatedData;
+      bracket.value.Winner = updatedData['Winner'];
+    } else {
+      // If no winner yet, continue as before
+      let updatedBracket = parseBracket(updatedData);
+      bracket.value = updatedBracket; // Update bracket with new structure
 
-    // After updating the bracket, create new matches for the next round
-    for (const [round, matchesArray] of Object.entries(updatedBracket)) {
-      console.log(`Creating matches for round: ${round}`, matchesArray);
-      for (const match of matchesArray) {
-        const homeTeamId = match[0]?.id;
-        const visitorTeamId = match[1]?.id;
-        if(homeTeamId && visitorTeamId) {
-          const date = "2024-01-01"; // Placeholder date, adjust as necessary
-          const place = "Example Venue"; // Placeholder venue, adjust as necessary
-          await createMatch(tournamentId, homeTeamId, visitorTeamId, round, date, place);
+      for (const [round, matchesArray] of Object.entries(updatedBracket)) {
+        console.log(`Creating matches for round: ${round}`, matchesArray);
+        for (const match of matchesArray) {
+          const homeTeamId = match[0]?.id;
+          const visitorTeamId = match[1]?.id;
+          if(homeTeamId && visitorTeamId) {
+            const date = "2024-01-01"; // Placeholder date, adjust as necessary
+            const place = "Example Venue"; // Placeholder venue, adjust as necessary
+            await createMatch(tournamentId, homeTeamId, visitorTeamId, round, date, place);
+          }
         }
       }
-    }
 
-    await fetchMatches(tournamentId); // Fetch updated matches
-    updateKey.value++; // Trigger UI updates if necessary
+      await fetchMatches(tournamentId); // Fetch updated matches
+      updateKey.value++; // Trigger UI updates if necessary
+    }
   } catch (error) {
     console.error('Error updating bracket with match results:', error);
   }
 };
 
+
+const fetchSelectedTournamentDetails = async () => {
+  if (selectedTournamentId.value) {
+    try {
+      const response = await fetch(`http://localhost:5000/tournaments/${selectedTournamentId.value}`);
+      const data = await response.json();
+      console.log("Data from API:", data);
+      selectedTournament.value = data.tournament;
+      showDeleteButton.value = true;
+
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du tournoi sélectionné:', error);
+    }
+  }
+};
 
 function parseBracket(rawBracket) {
   // Normalize the rawBracket to only include the rounds you need
@@ -387,17 +423,23 @@ function parseBracket(rawBracket) {
   return normalizedBracket;
 }
 
-
-
-
-
 onMounted(() => {
+  getTeams()
   fetchTournamentsFromServer();
-  getTeams();
 });
 </script>
 
 <style scoped>
+
+.winner-info {
+  padding: 20px;
+  background-color: gold; /* Green background */
+  color: white; /* White text */
+  border-radius: 8px;
+  text-align: center;
+  margin: 20px 0;
+}
+
 .bracket {
   display: flex;
   flex-direction: row;
@@ -414,10 +456,124 @@ onMounted(() => {
 }
 .match {
   display: flex;
-  justify-content: space-between;
+  align-items: center; /* Center align the items vertically */
+  justify-content: space-around;
   margin: 10px 0;
 }
 .team {
   margin: 0 10px;
+}
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f7f7f7; /* Une couleur neutre de fond */
+}
+
+/* Styles pour le titre principal */
+h2 {
+  color: #004d38; /* Une couleur verte foncée */
+  font-size: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Styles pour le formulaire et les listes */
+form,
+ul {
+  background-color: white;
+  padding: 1em;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour le conteneur du bracket */
+.bracket {
+  background-color: white;
+  padding: 1em;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour chaque round du bracket */
+.rounds {
+  background-color: #e6ffe6; /* Une couleur verte claire pour évoquer le terrain */
+  padding: 0.5em;
+  border-radius: 5px;
+  margin-bottom: 1em;
+}
+
+/* Styles pour les boutons */
+button {
+  background-color: #00802b; /* Vert foncé pour le bouton */
+  color: white;
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #005f1f; /* Une teinte plus foncée au survol */
+}
+
+/* Styles pour les équipes et les matchs */
+.team {
+  font-weight: bold;
+}
+
+.match {
+  padding: 0.5em;
+  border-bottom: 1px solid #ddd; /* Une ligne séparatrice pour chaque match */
+}
+
+.vs {
+  font-style: italic;
+   flex: 1; /* Each child will take up equal space */
+  text-align: center; /* Center the text for each child */
+}
+.vs {
+  margin: 0 15px; /* Add some horizontal margin to the 'vs' for spacing */
+  font-style: italic;
+  flex: none; /* Do not allow the 'vs' to grow, keeping its content width */
+}
+.generate-next-round {
+  background-color: black; /* Black background */
+  color: white; /* White text */
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.generate-next-round:hover {
+  background-color: #333; /* Darker background on hover */
+  color: #ddd; /* Lighter text on hover */
+}
+.team:first-child {
+  text-align: right; /* Right align the text of the first team */
+}
+
+.team:last-child {
+  text-align: left; /* Left align the text of the second team */
+}
+
+/* Ajout d'un petit padding autour des éléments pour l'aération */
+label,
+input,
+select,
+ul,
+li {
+  margin-bottom: 0.5em;
+}
+
+/* Spécifique aux listes pour ajouter des puces personnalisées */
+ul {
+  list-style-type: none;
+  padding-left: 1em;
+}
+
+li:before {
+  content: '⚽'; /* Ajout d'un ballon de soccer avant chaque élément de liste */
+  margin-right: 0.5em;
 }
 </style>
