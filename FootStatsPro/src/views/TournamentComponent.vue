@@ -1,22 +1,36 @@
 <template>
   <div>
-    <h2>Gestion des tournois</h2>
-    <form @submit.prevent="addTournament">
-      <label>Nom du tournoi:</label>
-      <input type="text" v-model="newTournament.name" required />
-      <label>Date de début:</label>
-      <input type="date" v-model="newTournament.startDate" required />
-      <label>Date de fin:</label>
-      <input type="date" v-model="newTournament.endDate" required />
-      <label>Nombre d'équipes:</label>
-      <select v-model="newTournament.teamCount" required>
-        <option v-for="count in [2, 4, 8, 16, 32]" :key="count" :value="count">{{ count }}</option>
-      </select>
-      <label>Lieu:</label>
-      <select v-model="newTournament.location" required>
-        <option v-for="(city, index) in cities" :key="index" :value="city.name">{{ city.name }}</option>
-      </select>
-      <button type="submit">Ajouter</button>
+   <h2>Gestion des tournois</h2>
+    <form @submit.prevent="addTournament" class="tournament-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tournamentName">Nom du tournoi:</label>
+          <input id="tournamentName" type="text" v-model="newTournament.name" required />
+        </div>
+        <div class="form-group">
+          <label for="startDate">Date de début:</label>
+          <input id="startDate" type="date" v-model="newTournament.startDate" required />
+        </div>
+        <div class="form-group">
+          <label for="endDate">Date de fin:</label>
+          <input id="endDate" type="date" v-model="newTournament.endDate" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="teamCount">Nombre d'équipes:</label>
+          <select id="teamCount" v-model="newTournament.teamCount" required>
+            <option v-for="count in [2, 4, 8, 16, 32]" :key="count" :value="count">{{ count }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="location">Lieu:</label>
+          <select id="location" v-model="newTournament.location" required>
+            <option v-for="(city, index) in cities" :key="index" :value="city.name">{{ city.name }}</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit">Créer</button>
     </form>
 
     <div v-if="Object.keys(bracket).length">
@@ -66,6 +80,7 @@
         </div>
       </div>
     </div>
+    <h2> Sélectionner un tournois </h2>
         <select v-model="selectedTournamentId" @change="fetchSelectedTournamentDetails">
   <option value="" disabled>Sélectionner un tournoi</option>
   <option v-for="(tournament, index) in tournaments" :key="tournament[0]" :value="tournament[0]">
@@ -605,5 +620,51 @@ ul {
 li:before {
   content: '⚽'; /* Ajout d'un ballon de soccer avant chaque élément de liste */
   margin-right: 0.5em;
+}
+
+.tournament-management {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap; /* Wrap items to the next line if not enough space */
+  margin-bottom: 15px; /* Adds space between rows */
+}
+
+/* Set explicit widths for form groups */
+.form-group {
+  margin-right: 10px; /* Manually set right margin for spacing between form groups */
+}
+
+.form-group:nth-child(1) { /* Nom du tournoi */
+  width: 30%;
+}
+
+.form-group:nth-child(2), /* Date de début */
+.form-group:nth-child(3) { /* Date de fin */
+  width: 20%;
+}
+
+.form-group:nth-child(4), /* Nombre d'équipes */
+.form-group:nth-child(5) { /* Lieu */
+  width: 25%;
+}
+
+/* Remove the right margin from the last form-group in each form-row */
+.form-row .form-group:last-child {
+  margin-right: 0;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 </style>
