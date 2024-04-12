@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Partie (
     PRIMARY KEY (match_id),
     FOREIGN KEY (equipe_locale_id) REFERENCES Equipe(equipe_id),
     FOREIGN KEY (equipe_visiteur_id) REFERENCES Equipe(equipe_id),
-    FOREIGN KEY (tournoi_id) REFERENCES tournoi(tournoi_id)
+    FOREIGN KEY (tournoi_id) REFERENCES tournoi(tournoi_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS Classement (
     saison VARCHAR(50),
