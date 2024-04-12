@@ -325,9 +325,39 @@ const playMatch = async (match) => {
   } catch (error) {
     console.error('Error playing match:', error);
   }
+    console.log("hometeamscore", homeTeamScore)
+    console.log("visitorTeam", visitorTeamScore)
+    if( homeTeamScore > visitorTeamScore){
+      console.log("le id home", homeTeamId);
+      console.log("le id away", visitorTeamId);
+      await updateStandings(homeTeamId, visitorTeamId)
+    }
+    else if( homeTeamScore < visitorTeamScore){
+      console.log("le id home", homeTeamId);
+      console.log("le id away", visitorTeamId);
+      await updateStandings(visitorTeamId, homeTeamId)
+    }
 };
 
 
+const updateStandings = async (winnerId, loserId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/update-standings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ winnerId, loserId })
+    });
+
+    if (!response.ok) {
+      throw new Error("Problem updating standings");
+    }
+
+    const data = await response.json();
+    console.log("Standings updated", data);
+  } catch (error) {
+    console.error('Error updating standings:', error);
+  }
+}
 
 const fetchMatchResults = async (tournamentId) => {
   try {

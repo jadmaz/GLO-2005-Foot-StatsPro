@@ -169,12 +169,49 @@ def fetch_match_results(tournament_id):
     } for row in results]
     return match_results
 
+
 def select_tournament_by_id(tournament_id):
     connection, cursor = _open_sql_connection()
     cursor.execute("SELECT * FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
     tournament = cursor.fetchone()
     connection.close()
     return tournament
+
+
+def select_standings():
+    connection, cursor = _open_sql_connection()
+    query = """
+    SELECT
+        C.saison,
+        C.equipe_id,
+        E.nom AS equipe_nom,
+        E.pays,
+        E.entraineur_principal,
+        E.stade_domicile,
+        C.nombre_de_victoires,
+        C.nombre_de_defaites
+    FROM
+        Classement C
+    JOIN
+        Equipe E ON C.equipe_id = E.equipe_id
+    ORDER BY
+        C.nombre_de_victoires DESC, C.nombre_de_defaites ASC
+    """
+    cursor.execute(query)
+    standings = cursor.fetchall()
+    cursor.close()
+    connection.close()  # Assurez-vous de fermer la connexion à la base de données
+    return standings
+
+
+
+def update_classement_table(winner_id, loser_id):
+    # Logic to update the Classement table
+    connection, cursor = _open_sql_connection()
+    cursor.execute("UPDATE Classement SET nombre_de_victoires = nombre_de_victoires + 1 WHERE equipe_id = %s",
+                   (winner_id,))
+    cursor.execute("UPDATE Classement SET nombre_de_defaites = nombre_de_defaites + 1 WHERE equipe_id = %s",
+                   (loser_id,))
 
 
 def delete_tournament(tournament_id):

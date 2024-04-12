@@ -3,7 +3,8 @@ from flask_cors import CORS
 
 from Flask.serverFunctions import organize_tournament, update_bracket_with_results
 from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, \
-    insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id
+    insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, \
+    update_classement_table, select_standings
 
 app = Flask(__name__)
 CORS(app)
@@ -54,6 +55,13 @@ def get_teams_and_players():
     return jsonify({"teams": teams})
 
 
+@app.route("/classement/fetchstandings", methods=['GET'])
+def get_standings():
+    standings = select_standings()
+    print(standings)
+    return jsonify({"standings": standings})
+
+
 @app.route("/create-match", methods=['POST'])
 def create_match():
     data = request.json
@@ -90,6 +98,17 @@ def play_match(match_id):
     update_match_result(match_id, home_team_score, visitor_team_score)
 
     return jsonify({"message": "Match updated successfully"}), 200
+
+
+@app.route('/update-standings', methods=['POST'])
+def update_standings():
+    data = request.json
+    winner_id = data.get('winnerId')
+    loser_id = data.get('loserId')
+
+    update_classement_table(winner_id, loser_id)
+
+    return jsonify({"message": "Standings updated successfully"})
 
 
 @app.route("/organize-tournament/<int:tournament_id>/<int:number_of_teams>", methods=['GET'])

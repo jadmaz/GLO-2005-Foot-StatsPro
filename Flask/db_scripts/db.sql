@@ -43,10 +43,8 @@ CREATE TABLE IF NOT EXISTS Partie (
     FOREIGN KEY (tournoi_id) REFERENCES tournoi(tournoi_id)
 );
 CREATE TABLE IF NOT EXISTS Classement (
-    classement_id INT AUTO_INCREMENT PRIMARY KEY,
     saison VARCHAR(50),
     equipe_id INT,
-    position INT,
     nombre_de_victoires INT,
     nombre_de_defaites INT,
     FOREIGN KEY (equipe_id) REFERENCES Equipe(equipe_id)
@@ -79,6 +77,101 @@ INSERT INTO Equipe (equipe_id, nom, pays, entraineur_principal, stade_domicile) 
 (6, 'AC Milan', 'Italy', 'Stefano Pioli', 'San Siro'),
 (7, 'Borussia Dortmund', 'Germany', 'Edin Terzic', 'Signal Iduna Park'),
 (8, 'Ajax Amsterdam', 'Netherlands', 'Erik ten Hag', 'Johan Cruyff Arena');
+
+INSERT INTO Equipe (equipe_id, nom, pays, entraineur_principal, stade_domicile) VALUES
+(9,'Atletico Madrid', 'Spain', 'Diego Simeone', 'Wanda Metropolitano'),
+(10,'Chelsea FC', 'England', 'Thomas Tuchel', 'Stamford Bridge'),
+(11, 'Bayern Munich', 'Germany', 'Julian Nagelsmann', 'Allianz Arena'),
+(12, 'Inter Milan', 'Italy', 'Simone Inzaghi', 'San Siro'),
+(13, 'Juventus', 'Italy', 'Massimiliano Allegri', 'Juventus Stadium'),
+(14, 'Arsenal FC', 'England', 'Mikel Arteta', 'Emirates Stadium'),
+(15, 'Tottenham Hotspur', 'England', 'Antonio Conte', 'Tottenham Hotspur Stadium'),
+(16, 'Borussia Mönchengladbach', 'Germany', 'Adi Hütter', 'Borussia-Park');
+
+INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
+('Jan Oblak', 29, 'Goalkeeper', 9),
+('Luis Suarez', 35, 'Forward', 9),
+('Joao Felix', 22, 'Forward', 9),
+('Koke', 30, 'Midfielder', 9),
+('Yannick Carrasco', 28, 'Midfielder', 9),
+('Jose Gimenez', 27, 'Defender', 9),
+('Edouard Mendy', 30, 'Goalkeeper', 10),
+('Romelu Lukaku', 29, 'Forward', 10),
+('Golo Kante', 31, 'Midfielder', 10),
+('Mason Mount', 23, 'Midfielder', 10),
+('Thiago Silva', 37, 'Defender', 10),
+('Reece James', 22, 'Defender', 10),
+('Manuel Neuer', 36, 'Goalkeeper', 11),
+('Robert Lewandowski', 33, 'Forward', 11),
+('Joshua Kimmich', 27, 'Midfielder', 11),
+('Thomas Muller', 32, 'Midfielder', 11),
+('Alphonso Davies', 21, 'Defender', 11),
+('Lucas Hernandez', 26, 'Defender', 11),
+('Samir Handanovic', 37, 'Goalkeeper', 12),
+('Lautaro Martinez', 24, 'Forward', 12),
+('Nicolo Barella', 25, 'Midfielder', 12),
+('Marcelo Brozovic', 29, 'Midfielder', 12),
+('Milan Skriniar', 27, 'Defender', 12),
+('Alessandro Bastoni', 23, 'Defender', 12),
+('Wojciech Szczesny', 32, 'Goalkeeper', 13),
+('Paulo Dybala', 28, 'Forward', 13),
+('Weston McKennie', 23, 'Midfielder', 13),
+('Matthijs de Ligt', 22, 'Defender', 13),
+('Leonardo Bonucci', 35, 'Defender', 13),
+('Federico Chiesa', 24, 'Forward', 13),
+('Aaron Ramsdale', 24, 'Goalkeeper', 14),
+('Bukayo Saka', 20, 'Forward', 14),
+('Martin Odegaard', 23, 'Midfielder', 14),
+('Gabriel Magalhaes', 24, 'Defender', 14),
+('Ben White', 24, 'Defender', 14),
+('Kieran Tierney', 24, 'Defender', 14),
+('Hugo Lloris', 35, 'Goalkeeper', 15),
+('Harry Kane', 28, 'Forward', 15),
+('Son Heung-min', 29, 'Forward', 15),
+('Dele Alli', 26, 'Midfielder', 15),
+('Eric Dier', 28, 'Defender', 15),
+('Sergio Reguilon', 25, 'Defender', 15),
+('Yann Sommer', 33, 'Goalkeeper', 16),
+('Marcus Thuram', 24, 'Forward', 16),
+('Florian Neuhaus', 25, 'Midfielder', 16),
+('Alassane Plea', 29, 'Forward', 16),
+('Matthias Ginter', 28, 'Defender', 16),
+('Nico Elvedi', 25, 'Defender', 16);
+
+INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
+('Unai Simon', 25, 'Goalkeeper', 9),
+('Felipe', 32, 'Defender', 9),
+('Renan Lodi', 24, 'Defender', 9),
+('Saul Niguez', 27, 'Midfielder', 9),
+('Rodrigo De Paul', 27, 'Midfielder', 9),
+
+('Timo Werner', 26, 'Forward', 10),
+('Christian Pulisic', 23, 'Forward', 10),
+('Hakim Ziyech', 29, 'Midfielder', 10),
+('Jorginho', 30, 'Midfielder', 10),
+('Ben Chilwell', 25, 'Defender', 10),
+
+('Serge Gnabry', 26, 'Forward', 11),
+('Leroy Sane', 26, 'Forward', 11),
+('Kingsley Coman', 25, 'Forward', 11),
+('Leon Goretzka', 27, 'Midfielder', 11),
+('Niklas Sule', 26, 'Defender', 11),
+
+('Alexis Sanchez', 33, 'Forward', 12),
+('Arturo Vidal', 34, 'Midfielder', 12),
+('Stefan de Vrij', 30, 'Defender', 12),
+('Ivan Perisic', 33, 'Midfielder', 12),
+('Denzel Dumfries', 26, 'Defender', 12),
+
+('Adrien Rabiot', 27, 'Midfielder', 13),
+('Moise Kean', 22, 'Forward', 13),
+('Alex Sandro', 31, 'Defender', 13),
+('Juan Cuadrado', 33, 'Defender', 13),
+('Danilo', 30, 'Defender', 13),
+
+('Granit Xhaka', 29, 'Midfielder', 14),
+('Pierre-Emerick Aubameyang', 32, 'Forward', 14);
+
 
 
 
@@ -121,25 +214,37 @@ INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
 ('Sadio Mané', 30, 'Forward', 5),
 ('Andrew Robertson', 27, 'Defender', 5);
 
-
-
-
-
-
 INSERT INTO Partie (date, lieu, resultat, equipe_locale_id, equipe_visiteur_id) VALUES
 ('2024-05-21', 'Camp Nou', '2-1', 1, 2),
 ('2024-05-22', 'Santiago Bernabeu', '0-0', 2, 3),
 ('2024-05-23', 'Parc des Princes', '3-2', 3, 4),
 ('2024-05-24', 'Etihad Stadium', '1-4', 4, 5);
-INSERT INTO Classement (saison, equipe_id, position, nombre_de_victoires, nombre_de_defaites) VALUES
-('2023-2024', 1, 1, 30, 4),
-('2023-2024', 2, 2, 28, 6),
-('2023-2024', 3, 3, 25, 9),
-('2023-2024', 4, 4, 23, 11),
-('2023-2024', 5, 5, 20, 14);
+
+Insert Into Classement(saison, nombre_de_victoires, nombre_de_defaites, equipe_id)
+VALUES
+('2023/2024', 0, 0, 1),
+('2023/2024', 0, 0, 2),
+('2023/2024', 0, 0, 3),
+('2023/2024', 0, 0, 4),
+('2023/2024', 0, 0, 5),
+('2023/2024', 0, 0, 6),
+('2023/2024', 0, 0, 7),
+('2023/2024', 0, 0, 8),
+('2023/2024', 0, 0, 9),
+('2023/2024', 0, 0, 10),
+('2023/2024', 0, 0, 11),
+('2023/2024', 0, 0, 12),
+('2023/2024', 0, 0, 13),
+('2023/2024', 0, 0, 14),
+('2023/2024', 0, 0, 15),
+('2023/2024', 0, 0, 16);
+
 
 
 SELECT * FROM Partie;
+SELECT * FROM Statistiques;
+SELECT * FROM Equipe;
+SELECT * FROM Classement;
 
 DROP TABLE Statistiques;
 DROP TABLE Joueur;
@@ -147,6 +252,8 @@ DROP TABLE Partie;
 DROP TABLE Classement;
 DROP TABLE Equipe;
 DROP TABLE tournoi;
+
+SELECT COUNT(*) FROM Joueur;
 
     SELECT
         E.equipe_id, E.nom AS equipe_nom, E.pays, E.entraineur_principal, E.stade_domicile,
