@@ -80,10 +80,10 @@ def update_bracket_with_results(bracket_structure, match_results):
         winners = process_current_round(matches, match_results)
 
         next_round_name = find_next_round(round_name, bracket_structure)
-        print(next_round_name)
-        if next_round_name and not bracket_structure[next_round_name] and next_round_name != "Winner":
+        print("next round name", next_round_name)
+        if next_round_name and not bracket_structure[next_round_name]:
             advance_winners_to_next_round(winners, next_round_name, bracket_structure)
-        elif winners:
+        elif not next_round_name and winners:
             bracket_structure['Winner'] = winners[0]
             print(f"Winner of the tournament is: {bracket_structure['Winner']}")
 
@@ -93,22 +93,35 @@ def update_bracket_with_results(bracket_structure, match_results):
 
 
 def process_current_round(matches, match_results):
+    print("Matches:", matches)
+    print("Match Results:", match_results)
     winners = []
     for match in matches:
-        for team in match:
-            # Find the match result that includes this team.
-            result = next((r for r in match_results if team['id'] in [r['home_team_id'], r['away_team_id']]), None)
-            if result:
-                winning_team_id = result['winner'] == 'home' and result['home_team_id'] or result['away_team_id']
-                if team['id'] == winning_team_id:
-                    winners.append(team)
-                    break
-
+        home_team, away_team = match[0], match[1]
+        print("home team", home_team)
+        print("away team", away_team)# We're assuming the first team is home and the second is away
+        # Find the match result that corresponds to the current match pair
+        result = next((r for r in match_results
+                       if r['home_team_id'] == home_team['id'] and r['away_team_id'] == away_team['id']), None)
+        if result:
+            # Determine which team won and add them to the winners list
+            winning_team_id = result['home_team_id'] if result['winner'] == 'home' else result['away_team_id']
+            if home_team['id'] == winning_team_id:
+                winners.append(home_team)
+            else:
+                winners.append(away_team)
+          # Once the winner is found, no need to check further for this match
+    print("Winners:", winners)
     return winners
 
 
+
+
 def advance_winners_to_next_round(winners, next_round_name, bracket_structure):
-    bracket_structure[next_round_name] = [[winners[i], winners[i + 1]] for i in range(0, len(winners), 2)]
+    if next_round_name == 'Winner':
+        bracket_structure[next_round_name] = winners[0]
+    else:
+        bracket_structure[next_round_name] = [[winners[i], winners[i + 1]] for i in range(0, len(winners), 2)]
 
 
 def find_match_id(match, match_results):
@@ -145,7 +158,7 @@ def reorder_bracket(bracket):
 
     print("Original bracket structure:", bracket)
 
-    predefined_order = ["1/16 Finals", "16 de finale", "Quarterfinals", "Semifinals", "Final"]
+    predefined_order = ["1/16 Finals", "16 de finale", "Quarterfinals", "Semifinals", "Final", "Winner"]
     ordered_round_names = [round for round in predefined_order if round in bracket]
 
     print("Predefined order of rounds:", predefined_order)
