@@ -4,7 +4,7 @@ from flask_cors import CORS
 from Flask.serverFunctions import organize_tournament, update_bracket_with_results
 from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, \
     insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, \
-    update_classement_table, select_standings
+    update_classement_table, select_standings, update_winner_in_tournament_table, select_team_by_id
 
 app = Flask(__name__)
 CORS(app)
@@ -48,7 +48,13 @@ def get_teams():
     teams = select_teams()
     return jsonify({"teams": teams})
 
-
+@app.route("/equipe/<int:id>", methods=['GET'])
+def get_team_by_id(id):
+    team = select_team_by_id(id)
+    if team:
+        return jsonify({"team": team})
+    else:
+        return jsonify({"message": "Équipe non trouvée"}), 404
 @app.route("/equipes_and_players", methods=['GET'])
 def get_teams_and_players():
     teams = select_teams_and_players()
@@ -109,6 +115,31 @@ def update_standings():
     update_classement_table(winner_id, loser_id)
 
     return jsonify({"message": "Standings updated successfully"})
+
+
+@app.route("/update-tournament-winner/<int:tournament_id>", methods=['PUT'])
+def update_winner(tournament_id):
+    try:
+        # Extraction des données JSON de la requête
+        data = request.json
+        winner_id = data.get('winner_id')
+
+        print("Winner ID:", winner_id)  # Ajout de cette instruction pour imprimer winner_id
+
+        # Appel de la fonction pour mettre à jour le gagnant dans la base de données
+        update_winner_in_tournament_table(tournament_id, winner_id)
+
+        # Journalisation du succès de la mise à jour
+        print(f"Winner updated successfully for tournament ID: {tournament_id}")
+
+        # Retourner une réponse JSON avec un code d'état 200 pour indiquer le succès
+        return jsonify({"message": "Winner updated successfully"}), 200
+    except Exception as e:
+        # Journalisation de l'erreur
+        print(f"An error occurred while updating winner for tournament ID {tournament_id}: {str(e)}")
+
+        # Retourner une réponse JSON avec un code d'état 500 pour indiquer l'échec avec l'erreur
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/organize-tournament/<int:tournament_id>/<int:number_of_teams>", methods=['GET'])

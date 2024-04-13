@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS Equipe (
     nom VARCHAR(255),
     pays VARCHAR(100),
     entraineur_principal VARCHAR(255),
-    stade_domicile VARCHAR(255)
+    stade_domicile VARCHAR(255),
+    trophee INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Joueur (
@@ -19,14 +20,18 @@ equipe_id INT,
 FOREIGN KEY (equipe_id) REFERENCES Equipe(equipe_id)
 );
 
+
 CREATE TABLE IF NOT EXISTS tournoi (
     tournoi_id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100),
     lieu VARCHAR(100),
-    nb_equipe integer,
+    nb_equipe INTEGER,
     date_de_debut DATE,
-    date_de_fin DATE
+    date_de_fin DATE,
+    gagnant INT,
+    FOREIGN KEY (gagnant) REFERENCES Equipe(equipe_id)
 );
+
 
 CREATE TABLE IF NOT EXISTS Partie (
     match_id INT AUTO_INCREMENT,
@@ -62,11 +67,6 @@ CREATE TABLE IF NOT EXISTS Statistiques (
     FOREIGN KEY (match_id) REFERENCES Partie(match_id)
 );
 
-INSERT INTO tournoi (nom, lieu, nb_equipe, date_de_debut, date_de_fin)
-VALUES
-    ('Tournoi A', 'Paris', 10, '2024-05-15', '2024-05-20'),
-    ('Tournoi B', 'Lyon', 8, '2024-06-01', '2024-06-05'),
-    ('Tournoi C', 'Marseille', 12, '2024-07-10', '2024-07-15');
 
 INSERT INTO Equipe (equipe_id, nom, pays, entraineur_principal, stade_domicile) VALUES
 (1, 'FC Barcelona', 'Spain', 'Xavi Hernandez', 'Camp Nou'),
@@ -239,19 +239,32 @@ VALUES
 ('2023/2024', 0, 0, 15),
 ('2023/2024', 0, 0, 16);
 
+DELIMITER //
+
+CREATE TRIGGER IncrementerTropheeAfterInsert
+AFTER UPDATE ON tournoi
+FOR EACH ROW
+BEGIN
+    IF NEW.gagnant IS NOT NULL THEN
+        UPDATE Equipe SET trophee = trophee + 1 WHERE equipe_id = NEW.gagnant;
+    END IF;
+END//
+
+DELIMITER ;
 
 
 SELECT * FROM Partie;
 SELECT * FROM Statistiques;
 SELECT * FROM Equipe;
 SELECT * FROM Classement;
+SELECT * FROM tournoi;
 
 DROP TABLE Statistiques;
 DROP TABLE Joueur;
 DROP TABLE Partie;
 DROP TABLE Classement;
-DROP TABLE Equipe;
 DROP TABLE tournoi;
+DROP TABLE Equipe;
 
 SELECT COUNT(*) FROM Joueur;
 

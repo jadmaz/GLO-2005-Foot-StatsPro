@@ -93,7 +93,8 @@
       <p>Du {{ new Date(selectedTournament[4]).toLocaleDateString() }} au {{ new Date(selectedTournament[5]).toLocaleDateString() }}</p>
       <p>{{ selectedTournament[3] }} équipes</p>
       <p>Lieu: {{ selectedTournament[2] }}</p>
-
+  <p v-if="selectedTournament[6]">Gagnant: {{ winnerName.nom }}</p>
+      <p v-else>Pas encore de gagnant</p>
     </header>
   </div>
 </template>
@@ -115,6 +116,7 @@ const cities = ref([
 ]);
 const showDeleteButton = ref(false);
 const selectedTournament = ref(null);
+const winnerName = ref(null);
 const bracket = ref({});
 const winner = ref(null)
 const currentTournamentId = ref(null); // Initialize currentTournamentId
@@ -384,6 +386,34 @@ const fetchMatchResults = async (tournamentId) => {
     return [];
   }
 };
+
+const updateWinnerInTournamentTable = async (tournamentId, winner_id) => {
+  try {
+    const payload = {
+      winner_id,
+    };
+
+    const response = await fetch(`http://localhost:5000/update-tournament-winner/${tournamentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    console.log('Response:', response);
+
+    if (!response.ok) {
+      throw new Error(`Failed to update winner in tournament table. Status: ${response.status}`);
+    }
+
+    console.log('Winner updated in tournament table.');
+  } catch (error) {
+    console.error('Error updating winner in tournament table:', error);
+  }
+};
+
+
 const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
   try {
     console.log('Tournament ID:', tournamentId);
@@ -417,6 +447,7 @@ const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
       console.log(`Winner of the tournament is: ${updatedData['Winner'].nom}`);
       winner.value = updatedData;
       bracket.value.Winner = updatedData['Winner'];
+      await updateWinnerInTournamentTable(tournamentId, updatedData['Winner'].id)
     } else {
       // If no winner yet, continue as before
       let updatedBracket = parseBracket(updatedData);
@@ -453,9 +484,33 @@ const fetchSelectedTournamentDetails = async () => {
       selectedTournament.value = data.tournament;
       showDeleteButton.value = true;
 
+      // Vérifiez si le tournoi a un gagnant et stockez son nom
+      if (data.tournament[6]) {
+        winnerName.value = await fetchTeamById(data.tournament[6]);
+        console.log("Winner name:", winnerName.value); // Ajout du console.log ici
+
+      }
+
     } catch (error) {
       console.error('Erreur lors de la récupération des détails du tournoi sélectionné:', error);
     }
+  }
+}
+
+const fetchTeamById = async (teamId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/equipe/${teamId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch team with ID ${teamId}`);
+    }
+    const data = await response.json();
+    if (!data.team) {
+      throw new Error(`Team data not found for ID ${teamId}`);
+    }
+    return data.team;
+  } catch (error) {
+    console.error('Error fetching team:', error);
+    return null;
   }
 };
 

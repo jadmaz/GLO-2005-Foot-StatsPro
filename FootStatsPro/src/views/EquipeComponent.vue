@@ -5,6 +5,7 @@
       <p>Pays: {{ equipe.pays }}</p>
       <p>Entraîneur: {{ equipe.entraineurPrincipal }}</p>
       <p>Stade: {{ equipe.stadeDomicile }}</p>
+      <p>Trophées: {{ equipe.trophees }}</p>
       <h3>Joueurs</h3>
       <ul class="joueurs-liste">
         <li v-for="joueur in equipe.joueurs" :key="joueur.id">
@@ -21,17 +22,18 @@ const equipes = ref([]);
 const processTeamsData = (rawData) => {
   const teamsMap = new Map();
   rawData.forEach((teamData) => {
-    const [equipeId, equipeNom, pays, entraineurPrincipal, stadeDomicile, joueurId, joueurNom, joueurAge, joueurPosition] = teamData;
+const [equipeId, equipeNom, pays, entraineurPrincipal, stadeDomicile, trophees, joueurId, joueurNom, joueurAge, joueurPosition] = teamData;
     if (!teamsMap.has(equipeId)) {
-      teamsMap.set(equipeId, {
-        id: equipeId,
-        nom: equipeNom,
-        pays: pays,
-        entraineurPrincipal: entraineurPrincipal,
-        stadeDomicile: stadeDomicile,
-        joueurs: [],
-      });
-    }
+  teamsMap.set(equipeId, {
+    id: equipeId,
+    nom: equipeNom,
+    pays: pays,
+    entraineurPrincipal: entraineurPrincipal,
+    trophees: trophees, // Utilisez "trophees" au lieu de "trophee"
+    stadeDomicile: stadeDomicile,
+    joueurs: [],
+  });
+}
     if (joueurId && joueurNom) {
       const player = {
         id: joueurId,

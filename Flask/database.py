@@ -9,7 +9,7 @@ def _open_sql_connection():
     host = os.environ.get("HOST")
     port = int(os.environ.get("PORT"))
     database = os.environ.get("DATABASE")
-    user = os.environ.get("USERNAME")
+    user = os.environ.get("USER")
     password = os.environ.get("PASSWORD")
 
     connection = pymysql.connect(
@@ -56,6 +56,23 @@ def select_teams():
     } for row in cursor.fetchall()]
     connection.close()
     return teams
+def select_team_by_id(id):
+    connection, cursor = _open_sql_connection()
+    query = "SELECT nom, pays, entraineur_principal, stade_domicile, trophee FROM Equipe WHERE equipe_id = %s"
+    cursor.execute(query, (id,))
+    team = cursor.fetchone()
+    connection.close()
+
+    if team:
+        return {
+            'nom': team[0],
+            'pays': team[1],
+            'entraineur_principal': team[2],
+            'stade_domicile': team[3],
+            'trophée': team[4]
+        }
+    else:
+        return None
 
 
 def create_match(tournament_id, team1_id, team2_id, round):
@@ -72,7 +89,7 @@ def select_teams_and_players():
     connection, cursor = _open_sql_connection()
     query = """
     SELECT 
-        E.equipe_id, E.nom AS equipe_nom, E.pays, E.entraineur_principal, E.stade_domicile,
+        E.equipe_id, E.nom AS equipe_nom, E.pays, E.entraineur_principal, E.stade_domicile, E.trophee,
         J.joueur_id, J.nom AS joueur_nom, J.age, J.position
     FROM 
         Equipe E
@@ -168,7 +185,25 @@ def fetch_match_results(tournament_id):
         "winner": row[3]
     } for row in results]
     return match_results
+def update_winner_in_tournament_table(tournament_id, winner_id):
+    try:
 
+        # Création d'un curseur pour exécuter des requêtes
+        connection, cursor = _open_sql_connection()
+
+        # Requête SQL pour mettre à jour le gagnant dans la table "tournoi"
+        cursor.execute("UPDATE tournoi SET gagnant = %s WHERE tournoi_id = %s", (winner_id, tournament_id))
+
+        # Commit des changements dans la base de données
+        connection.commit()
+
+        # Fermeture du curseur et de la connexion
+        cursor.close()
+        connection.close()
+
+        print(f"Winner updated in tournament {tournament_id} to {winner_id}")
+    except Exception as e:
+        raise ValueError(f"Failed to update winner in tournament table: {str(e)}")
 
 def select_tournament_by_id(tournament_id):
     connection, cursor = _open_sql_connection()
