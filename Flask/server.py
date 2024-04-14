@@ -2,9 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
 from Flask.serverFunctions import organize_tournament, update_bracket_with_results
-from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, select_players
-from database import insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, update_classement_table, select_standings, update_winner_in_tournament_table, select_team_by_id
-from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, update_classement_table, select_standings, update_winner_in_tournament_table, select_team_by_id, get_percentage_wins
+from database import *
 
 
 app = Flask(__name__)
@@ -73,7 +71,6 @@ def get_teams_and_players():
 @app.route("/classement/fetchstandings", methods=['GET'])
 def get_standings():
     standings = select_standings()
-    print(standings)
     return jsonify({"standings": standings})
 
 
@@ -96,12 +93,16 @@ def get_matches(tournament_id):
 
 
 @app.route("/matches/results/<int:tournament_id>", methods=['GET'])
-def get_match_results(tournament_id):
+def get_match_results_with_team_names(tournament_id):
     try:
         results = fetch_match_results(tournament_id)
+        for result in results:
+            result['home_team_name'] = get_team_name_by_id(result['home_team_id'])
+            result['away_team_name'] = get_team_name_by_id(result['away_team_id'])
         return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/play-match/<int:match_id>', methods=['POST'])
@@ -129,35 +130,20 @@ def update_standings():
 @app.route("/update-tournament-winner/<int:tournament_id>", methods=['PUT'])
 def update_winner(tournament_id):
     try:
-        # Extraction des données JSON de la requête
         data = request.json
         winner_id = data.get('winner_id')
-
-        print("Winner ID:", winner_id)  # Ajout de cette instruction pour imprimer winner_id
-
-        # Appel de la fonction pour mettre à jour le gagnant dans la base de données
         update_winner_in_tournament_table(tournament_id, winner_id)
 
-        # Journalisation du succès de la mise à jour
-        print(f"Winner updated successfully for tournament ID: {tournament_id}")
-
-        # Retourner une réponse JSON avec un code d'état 200 pour indiquer le succès
         return jsonify({"message": "Winner updated successfully"}), 200
     except Exception as e:
-        # Journalisation de l'erreur
         print(f"An error occurred while updating winner for tournament ID {tournament_id}: {str(e)}")
-
-        # Retourner une réponse JSON avec un code d'état 500 pour indiquer l'échec avec l'erreur
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/organize-tournament/<int:tournament_id>/<int:number_of_teams>", methods=['GET'])
 def get_tournament_bracket(tournament_id, number_of_teams):
     try:
-        # Assuming `organize_tournament` returns the bracket structure
-        print("getting tournament bracket: ", tournament_id)
         bracket = organize_tournament(tournament_id, number_of_teams)
-        print("avant le retour du FETCH", bracket)
         return bracket, 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -177,37 +163,18 @@ def get_tournament_by_id(tournament_id):
 
 @app.route('/update-bracket/<int:tournament_id>', methods=['POST'])
 def api_update_bracket(tournament_id):
-    print(tournament_id)
     data = request.get_json()
-    print("bracket structure", data)
-
-    # Extract the bracket structure from the request
     bracket_structure = data['bracket']
-
-    # Fetch the latest match results for the tournament
     match_results = fetch_match_results(tournament_id)
-    print("match results", match_results)
-
-    # Ensure the match results are properly formatted
     if match_results is None:
         return jsonify({"error": "Unable to retrieve match results"}), 400
-
-    # Update the bracket based on the match results
     updated_bracket_structure = update_bracket_with_results(bracket_structure, match_results)
-    print("le bon", updated_bracket_structure)
-
-    # Return the updated bracket structure as a response
     return jsonify(updated_bracket_structure), 200
 
 
 
-def updatedatabase(tournamentid, winner):
-    # logique d'updating du database avec le winner
-    pass
-
 @app.route('/joueur/<string:position>', methods=['GET'])
 def get_players(position):
-    print(position)
     players = select_players(position)
     response = {
         "status": 200,

@@ -80,22 +80,33 @@
         </div>
       </div>
     </div>
-    <h2> Sélectionner un tournois </h2>
-        <select v-model="selectedTournamentId" @change="fetchSelectedTournamentDetails">
-  <option value="" disabled>Sélectionner un tournoi</option>
-  <option v-for="(tournament, index) in tournaments" :key="tournament[0]" :value="tournament[0]">
-    {{ tournament[1] }}
-  </option>
-</select>
-<button v-if="showDeleteButton" @click="deleteTournaments(selectedTournamentId)">Supprimer</button>
-<header v-if="selectedTournament">
+    <h2>Sélectionner un tournoi</h2>
+    <select v-model="selectedTournamentId" @change="fetchSelectedTournamentDetails">
+      <option value="" disabled>Sélectionner un tournoi</option>
+      <option v-for="(tournament, index) in tournaments" :key="tournament[0]" :value="tournament[0]">
+        {{ tournament[1] }}
+      </option>
+    </select>
+    <button v-if="showDeleteButton" @click="deleteTournaments(selectedTournamentId)">Supprimer</button>
+
+    <header v-if="selectedTournament">
       <h3>{{ selectedTournament[1] }}</h3>
       <p>Du {{ new Date(selectedTournament[4]).toLocaleDateString() }} au {{ new Date(selectedTournament[5]).toLocaleDateString() }}</p>
       <p>{{ selectedTournament[3] }} équipes</p>
       <p>Lieu: {{ selectedTournament[2] }}</p>
   <p v-if="selectedTournament[6] && winnerName">Gagnant: {{ winnerName.nom }}</p>
       <p v-else>Pas encore de gagnant</p>
-    </header>
+
+    <div v-if="matches.length">
+  <h2>Résultats des matchs</h2>
+  <ul>
+    <li v-for="(match, index) in matches" :key="index">
+      <p>Match {{ index + 1 }}:</p>
+      <p>{{ match.home_team_name }} {{ match.resultat }} {{ match.away_team_name }}</p>
+    </li>
+  </ul>
+</div>
+</header>
   </div>
 </template>
 
@@ -104,7 +115,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final", "Winner"]); // Now knownRounds is a reactive reference
+const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final", "Winner"]);
 const updateKey = ref(0);
 const tournaments = ref([]);
 const teams = ref([]);
@@ -119,7 +130,7 @@ const selectedTournament = ref(null);
 const winnerName = ref(null);
 const bracket = ref({});
 const winner = ref(null)
-const currentTournamentId = ref(null); // Initialize currentTournamentId
+const currentTournamentId = ref(null);
 const selectedTournamentId = ref(null);
 const newTournament = ref({
   name: '',
@@ -148,22 +159,18 @@ const addTournament = async () => {
     try {
       const data = await postTournament(tournament);
       if (data && data.tournoi_id) {
-        console.log("Tournament added successfully:", data);
         currentTournamentId.value = data.tournoi_id;
 
-        // Fetch the latest list of tournaments from the server,
-        // which now includes the newly added tournament.
+
         await fetchTournamentsFromServer();
 
         await fetchBracket(data.tournoi_id, tournament.teamCount);
-        console.log("VOICI LE BRACKET", bracket.value)
         for (const [round, matches] of Object.entries(bracket.value)) {
          for (const match of matches) {
           const homeTeamId = match[0].id;
           const visitorTeamId = match[1].id;
           const date = "2024-01-01";
           const place = "Exemple Lieu";
-          console.log(data.tournoi_id);
           await createMatch(data.tournoi_id, homeTeamId, visitorTeamId, round, date, place);
           await fetchMatches(data.tournoi_id);
       }
@@ -172,7 +179,6 @@ const addTournament = async () => {
         console.error("Tournament ID not received:", data);
       }
 
-      // Reset the form fields
       newTournament.value = {
         name: '',
         startDate: '',
@@ -186,7 +192,6 @@ const addTournament = async () => {
     }
   }
 };
-
 const deleteTournaments = async (tournamentId) => {
   try {
     const response = await fetch(`http://localhost:5000/delete-tournament/${tournamentId}`, {
@@ -220,30 +225,26 @@ async function postTournament(tournament) {
     });
 
     if (!response.ok) {
-      // If the response is not OK, throw an error with the response status
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Response data:", data);
 
-    // Return the data so it can be used by the caller
+
+
     return data;
   } catch (error) {
     console.error('Error sending tournament:', error);
-    // Rethrow the error to ensure the caller can catch and handle it
     throw error;
   }
 }
 
 const getTeams = async() => {
-  console.log("fetching teams");
   try{
     const response = await fetch('http://localhost:5000/equipe')
     if(!response.ok){
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("teams fetched succesfully", data)
     teams.value = data.teams ;
   }
   catch (error){
@@ -268,10 +269,7 @@ const fetchBracket = async (tournamentId, numberOfTeams) => {
       throw new Error('Failed to fetch bracket structure');
     }
     const data = await response.json();
-    console.log("Fetched Bracket Structure:", data); // Debug output
      bracket.value = parseBracket(data);
-     console.log("bracket en json initial", (JSON.stringify(bracket)));
-     console.log("bracket en json initial", (JSON.stringify(bracket.value)));
   } catch (error) {
     console.error('Error fetching bracket structure:', error);
   }
@@ -285,9 +283,6 @@ const fetchMatches = async (tournamentId) => {
         }
         const data = await response.json();
         matches.value = data
-        console.log("Matches fetched successfully:", data);
-        console.log(matches);
-        // Ici, vous pouvez mettre à jour l'état de votre composant Vue avec les matchs récupérés
     } catch (error) {
         console.error('Error fetching matches:', error);
     }
@@ -300,7 +295,6 @@ const createMatch = async (tournamentId, homeTeamId, visitorTeamId, round) => {
         body: JSON.stringify({ tournamentId, homeTeamId, visitorTeamId, round })
     });
     const data = await response.json();
-    console.log("Match created:", data);
 };
 
 const playMatch = async (match) => {
@@ -319,10 +313,28 @@ const playMatch = async (match) => {
   }
 
   const matchId = foundMatch.match_id;
-  console.log("Match ID:", matchId);
 
-  const homeTeamScore = prompt(`Enter score for ${match[0].nom}:`);
-  const visitorTeamScore = prompt(`Enter score for ${match[1].nom}:`);
+  let homeTeamScore = "";
+  let visitorTeamScore = "";
+
+  while (homeTeamScore === visitorTeamScore) {
+    homeTeamScore = prompt(`Enter score for ${match[0].nom}:`);
+
+    while (isNaN(homeTeamScore)) {
+      homeTeamScore = prompt("Please enter a valid score for the home team (a number):");
+    }
+
+    visitorTeamScore = prompt(`Enter score for ${match[1].nom}:`);
+
+    while (isNaN(visitorTeamScore)) {
+      visitorTeamScore = prompt("Please enter a valid score for the visitor team (a number):");
+    }
+
+    if (homeTeamScore === visitorTeamScore) {
+      alert("Scores cannot be equal. Please enter different scores.");
+    }
+
+  }
 
   try {
     const response = await fetch(`http://localhost:5000/play-match/${matchId}`, {
@@ -342,18 +354,16 @@ const playMatch = async (match) => {
   } catch (error) {
     console.error('Error playing match:', error);
   }
-    console.log("hometeamscore", homeTeamScore)
-    console.log("visitorTeam", visitorTeamScore)
-    if( homeTeamScore > visitorTeamScore){
-      console.log("le id home", homeTeamId);
-      console.log("le id away", visitorTeamId);
-      await updateStandings(homeTeamId, visitorTeamId)
-    }
-    else if( homeTeamScore < visitorTeamScore){
-      console.log("le id home", homeTeamId);
-      console.log("le id away", visitorTeamId);
-      await updateStandings(visitorTeamId, homeTeamId)
-    }
+
+
+
+  if (parseInt(homeTeamScore) > parseInt(visitorTeamScore)) {
+
+    await updateStandings(homeTeamId, visitorTeamId);
+  } else {
+
+    await updateStandings(visitorTeamId, homeTeamId);
+  }
 };
 
 const updateStandings = async (winnerId, loserId) => {
@@ -379,12 +389,17 @@ const fetchMatchResults = async (tournamentId) => {
   try {
     const response = await fetch(`http://localhost:5000/matches/results/${tournamentId}`);
     if (!response.ok) throw new Error('Failed to fetch match results');
-    return await response.json();
+    const matchResults = await response.json();
+
+
+    matches.value = matchResults;
+
   } catch (error) {
     console.error('Error fetching match results:', error);
-    return [];
+    matches.value = [];
   }
 };
+
 
 const updateWinnerInTournamentTable = async (tournamentId, winner_id) => {
   try {
@@ -400,13 +415,10 @@ const updateWinnerInTournamentTable = async (tournamentId, winner_id) => {
       body: JSON.stringify(payload),
     });
 
-    console.log('Response:', response);
 
     if (!response.ok) {
       throw new Error(`Failed to update winner in tournament table. Status: ${response.status}`);
     }
-
-    console.log('Winner updated in tournament table.');
   } catch (error) {
     console.error('Error updating winner in tournament table:', error);
   }
@@ -415,15 +427,12 @@ const updateWinnerInTournamentTable = async (tournamentId, winner_id) => {
 
 const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
   try {
-    console.log('Tournament ID:', tournamentId);
-    console.log('Initial Bracket:', bracketData);
 
     const payload = {
       tournamentId,
       bracket: bracketData,
     };
 
-    console.log('Payload sent to server:', JSON.stringify(payload, null, 2));
 
     const response = await fetch(`http://localhost:5000/update-bracket/${tournamentId}`, {
       method: 'POST',
@@ -433,17 +442,15 @@ const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
       body: JSON.stringify(payload),
     });
 
-    console.log('Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Failed to update bracket with match results. Status: ${response.status}`);
     }
     const updatedData = await response.json();
-    console.log('Updated Bracket:', updatedData);
+
 
     // Check if a winner has been determined
     if (updatedData['Winner']) {
-      console.log(`Winner of the tournament is: ${updatedData['Winner'].nom}`);
       winner.value = updatedData;
       bracket.value.Winner = updatedData['Winner'];
       await updateWinnerInTournamentTable(tournamentId, updatedData['Winner'].id)
@@ -453,7 +460,6 @@ const updateBracketWithMatchResults = async (tournamentId, bracketData) => {
       bracket.value = updatedBracket; // Update bracket with new structure
 
       for (const [round, matchesArray] of Object.entries(updatedBracket)) {
-        console.log(`Creating matches for round: ${round}`, matchesArray);
         for (const match of matchesArray) {
           const homeTeamId = match[0]?.id;
           const visitorTeamId = match[1]?.id;
@@ -479,16 +485,17 @@ const fetchSelectedTournamentDetails = async () => {
     try {
       const response = await fetch(`http://localhost:5000/tournaments/${selectedTournamentId.value}`);
       const data = await response.json();
-      console.log("Data from API:", data);
       selectedTournament.value = data.tournament;
       showDeleteButton.value = true;
 
-      // Vérifiez si le tournoi a un gagnant et stockez son nom
+
       if (data.tournament[6]) {
         winnerName.value = await fetchTeamById(data.tournament[6]);
-        console.log("Winner name:", winnerName.value); // Ajout du console.log ici
 
       }
+
+      await fetchMatchResults(selectedTournamentId.value);
+
 
     } catch (error) {
       console.error('Erreur lors de la récupération des détails du tournoi sélectionné:', error);
@@ -514,7 +521,6 @@ const fetchTeamById = async (teamId) => {
 };
 
 function parseBracket(rawBracket) {
-  // Normalize the rawBracket to only include the rounds you need
   const normalizedBracket = {};
   knownRounds.value.forEach(round => {
     normalizedBracket[round] = rawBracket[round] || [];
@@ -532,8 +538,8 @@ onMounted(() => {
 
 .winner-info {
   padding: 20px;
-  background-color: gold; /* Green background */
-  color: white; /* White text */
+  background-color: gold;
+  color: white;
   border-radius: 8px;
   text-align: center;
   margin: 20px 0;
@@ -555,7 +561,7 @@ onMounted(() => {
 }
 .match {
   display: flex;
-  align-items: center; /* Center align the items vertically */
+  align-items: center;
   justify-content: space-around;
   margin: 10px 0;
 }
@@ -564,17 +570,17 @@ onMounted(() => {
 }
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f7f7f7; /* Une couleur neutre de fond */
+  background-color: #f7f7f7;
 }
 
-/* Styles pour le titre principal */
+
 h2 {
-  color: #004d38; /* Une couleur verte foncée */
+  color: #004d38;
   font-size: 1.5em;
   margin-bottom: 0.5em;
 }
 
-/* Styles pour le formulaire et les listes */
+
 form,
 ul {
   background-color: white;
@@ -583,7 +589,7 @@ ul {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Styles pour le conteneur du bracket */
+
 .bracket {
   background-color: white;
   padding: 1em;
@@ -591,17 +597,17 @@ ul {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Styles pour chaque round du bracket */
+
 .rounds {
-  background-color: #e6ffe6; /* Une couleur verte claire pour évoquer le terrain */
+  background-color: #e6ffe6;
   padding: 0.5em;
   border-radius: 5px;
   margin-bottom: 1em;
 }
 
-/* Styles pour les boutons */
+
 button {
-  background-color: #00802b; /* Vert foncé pour le bouton */
+  background-color: #00802b;
   color: white;
   border: none;
   padding: 0.5em 1em;
@@ -611,32 +617,31 @@ button {
 }
 
 button:hover {
-  background-color: #005f1f; /* Une teinte plus foncée au survol */
+  background-color: #005f1f;
 }
 
-/* Styles pour les équipes et les matchs */
 .team {
   font-weight: bold;
 }
 
 .match {
   padding: 0.5em;
-  border-bottom: 1px solid #ddd; /* Une ligne séparatrice pour chaque match */
+  border-bottom: 1px solid #ddd;
 }
 
 .vs {
   font-style: italic;
-   flex: 1; /* Each child will take up equal space */
-  text-align: center; /* Center the text for each child */
+   flex: 1;
+  text-align: center;
 }
 .vs {
-  margin: 0 15px; /* Add some horizontal margin to the 'vs' for spacing */
+  margin: 0 15px;
   font-style: italic;
-  flex: none; /* Do not allow the 'vs' to grow, keeping its content width */
+  flex: none;
 }
 .generate-next-round {
-  background-color: black; /* Black background */
-  color: white; /* White text */
+  background-color: black;
+  color: white;
   border: none;
   padding: 0.5em 1em;
   border-radius: 5px;
@@ -645,18 +650,18 @@ button:hover {
 }
 
 .generate-next-round:hover {
-  background-color: #333; /* Darker background on hover */
-  color: #ddd; /* Lighter text on hover */
+  background-color: #333;
+  color: #ddd;
 }
 .team:first-child {
-  text-align: right; /* Right align the text of the first team */
+  text-align: right;
 }
 
 .team:last-child {
-  text-align: left; /* Left align the text of the second team */
+  text-align: left;
 }
 
-/* Ajout d'un petit padding autour des éléments pour l'aération */
+
 label,
 input,
 select,
@@ -665,14 +670,14 @@ li {
   margin-bottom: 0.5em;
 }
 
-/* Spécifique aux listes pour ajouter des puces personnalisées */
+
 ul {
   list-style-type: none;
   padding-left: 1em;
 }
 
 li:before {
-  content: '⚽'; /* Ajout d'un ballon de soccer avant chaque élément de liste */
+  content: '⚽';
   margin-right: 0.5em;
 }
 
@@ -685,30 +690,30 @@ li:before {
 
 .form-row {
   display: flex;
-  flex-wrap: wrap; /* Wrap items to the next line if not enough space */
-  margin-bottom: 15px; /* Adds space between rows */
+  flex-wrap: wrap;
+  margin-bottom: 15px;
 }
 
-/* Set explicit widths for form groups */
+
 .form-group {
-  margin-right: 10px; /* Manually set right margin for spacing between form groups */
+  margin-right: 10px;
 }
 
-.form-group:nth-child(1) { /* Nom du tournoi */
+.form-group:nth-child(1) {
   width: 30%;
 }
 
-.form-group:nth-child(2), /* Date de début */
-.form-group:nth-child(3) { /* Date de fin */
+.form-group:nth-child(2),
+.form-group:nth-child(3) {
   width: 20%;
 }
 
-.form-group:nth-child(4), /* Nombre d'équipes */
-.form-group:nth-child(5) { /* Lieu */
+.form-group:nth-child(4),
+.form-group:nth-child(5) {
   width: 25%;
 }
 
-/* Remove the right margin from the last form-group in each form-row */
+
 .form-row .form-group:last-child {
   margin-right: 0;
 }

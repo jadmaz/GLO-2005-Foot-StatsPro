@@ -59,13 +59,10 @@ CREATE TABLE IF NOT EXISTS Classement (
 CREATE TABLE IF NOT EXISTS Statistiques (
     statistique_id INT AUTO_INCREMENT PRIMARY KEY,
     joueur_id INT,
-    match_id INT,
-    buts_marques INT,
-    passes_decisives INT,
-    tirs INT,
-    fautes INT,
-    FOREIGN KEY (joueur_id) REFERENCES Joueur(joueur_id),
-    FOREIGN KEY (match_id) REFERENCES Partie(match_id)
+    buts_marques INT DEFAULT 0,
+    passes_decisives INT DEFAULT 0,
+    nb_matchs INT DEFAULT 0,
+    FOREIGN KEY (joueur_id) REFERENCES Joueur(joueur_id)
 );
 
 
@@ -269,6 +266,7 @@ VALUES
 ('2023/2024', 0, 0, 16);
 
 
+
 DELIMITER //
 
 CREATE TRIGGER IncrementerTropheeAfterInsert
@@ -344,18 +342,24 @@ DELIMITER ;
 call GetWinPercentage(1, 2);
 
 
+INSERT INTO Statistiques (joueur_id, buts_marques, passes_decisives)
+SELECT J.joueur_id, 0, 0
+FROM Equipe E
+JOIN Joueur J ON E.equipe_id = J.equipe_id;
+
+
 SELECT * FROM Partie;
 SELECT * FROM Statistiques;
 SELECT * FROM Equipe;
 SELECT * FROM Classement;
 SELECT * FROM tournoi;
+SELECT * FROM joueur;
 
 DROP TABLE Statistiques;
 DROP TABLE Joueur;
 DROP TABLE Partie;
 DROP TABLE Classement;
 DROP TABLE tournoi;
-
 DROP TABLE Equipe;
 
 drop database FootProStats_bd;
@@ -363,10 +367,3 @@ DELIMITER $$
 
 
 drop procedure GetWinPercentage;
-
-
-
-
-
-
-

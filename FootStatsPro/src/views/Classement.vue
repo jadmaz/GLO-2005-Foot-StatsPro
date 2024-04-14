@@ -74,8 +74,6 @@ async function fetchStandings() {
     standings.value = (await response.json()).standings;
 
 
-    console.log(standings.value)
-    console.log(JSON.stringify(standings.value))
   } catch (error) {
     console.error('Error fetching standings:', error);
   }
@@ -93,21 +91,18 @@ async function fetchMatchWinPercentage() {
       throw new Error('Failed to fetch match win percentages');
     }
     matchResults.value = await response.json();
-    console.log("values", matchResults.value);
   } catch (error) {
     console.error('Error fetching match win percentages:', error);
   }
 }
 
 const getTeams = async() => {
-  console.log("fetching teams");
   try{
     const response = await fetch('http://localhost:5000/equipe')
     if(!response.ok){
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("teams fetched succesfully", data)
     teams.value = data.teams ;
   }
   catch (error){

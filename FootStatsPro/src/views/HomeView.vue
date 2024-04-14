@@ -38,7 +38,6 @@
           <p>"Cette plateforme a transformé notre manière de suivre le football professionnel. Un outil indispensable pour notre équipe!"</p>
           <cite>- Jean Dupont, Analyste Sportif</cite>
         </blockquote>
-        <!-- Plus de témoignages... -->
       </div>
     </section>
   </div>
@@ -123,13 +122,12 @@ export default {
 }
 
 
-/* Testimonials Section */
 .testimonials {
   background-color: #f8f9fa;
   padding: 2rem;
 }
 .testimonial-list {
-  /* Styling for testimonials */
+
 }
 .testimonial {
   padding: 1rem;

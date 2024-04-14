@@ -9,7 +9,7 @@ def _open_sql_connection():
     host = os.environ.get("HOST")
     port = int(os.environ.get("PORT"))
     database = os.environ.get("DATABASE")
-    user = os.environ.get("USERNAME")
+    user = os.environ.get("USER")
     password = os.environ.get("PASSWORD")
 
     connection = pymysql.connect(
@@ -29,7 +29,7 @@ def insert_tournaments(name, location, team_count, start_date, end_date):
     connection, cursor = _open_sql_connection()
     cursor.execute("INSERT INTO tournoi (nom, lieu, nb_equipe, date_de_debut, date_de_fin) VALUES (%s, %s, %s, %s, %s)",
                    (name, location, team_count, start_date, end_date))
-    tournoi_id = connection.insert_id()  # This retrieves the auto-increment ID of the last inserted row
+    tournoi_id = connection.insert_id()
     connection.commit()
     connection.close()
     return tournoi_id
@@ -171,7 +171,7 @@ def update_match_result(match_id, home_team_score, visitor_team_score):
 def fetch_match_results(tournament_id):
     connection, cursor = _open_sql_connection()
     query = """
-        SELECT match_id, equipe_locale_id, equipe_visiteur_id, winner
+        SELECT match_id, equipe_locale_id, equipe_visiteur_id, winner, resultat
         FROM Partie
         WHERE tournoi_id = %s
     """
@@ -179,29 +179,34 @@ def fetch_match_results(tournament_id):
     results = cursor.fetchall()
     cursor.close()
     connection.close()
-    # Transform the results into a format that includes team IDs and the winner
     match_results = [{
         "match_id": row[0],
         "home_team_id": row[1],
         "away_team_id": row[2],
-        "winner": row[3]
+        "winner": row[3],
+        "resultat": row[4]
     } for row in results]
     return match_results
 
+def get_team_name_by_id(team_id):
+    connection, cursor = _open_sql_connection()
+    query = "SELECT nom FROM Equipe WHERE equipe_id = %s"
+    cursor.execute(query, (team_id,))
+    team_name = cursor.fetchone()
+    cursor.close()
+    connection.close()
+
+    if team_name:
+        return team_name[0]
+    else:
+        return None
 
 def update_winner_in_tournament_table(tournament_id, winner_id):
     try:
 
-        # Création d'un curseur pour exécuter des requêtes
         connection, cursor = _open_sql_connection()
-
-        # Requête SQL pour mettre à jour le gagnant dans la table "tournoi"
         cursor.execute("UPDATE tournoi SET gagnant = %s WHERE tournoi_id = %s", (winner_id, tournament_id))
-
-        # Commit des changements dans la base de données
         connection.commit()
-
-        # Fermeture du curseur et de la connexion
         cursor.close()
         connection.close()
 
@@ -240,7 +245,7 @@ def select_standings():
     cursor.execute(query)
     standings = cursor.fetchall()
     cursor.close()
-    connection.close()  # Assurez-vous de fermer la connexion à la base de données
+    connection.close()
     return standings
 
 
@@ -256,17 +261,10 @@ def update_classement_table(winner_id, loser_id):
 def get_percentage_wins(team1_id, team2_id):
     connection, cursor = _open_sql_connection()
     try:
-        # Prepare and execute the stored procedure call with input parameters
         cursor.callproc('GetWinPercentage', [team1_id, team2_id])
-
-        # Fetch the result set
         results = cursor.fetchall()
-
-        # Close cursor and connection
         cursor.close()
         connection.close()
-
-        # Assuming the procedure might return more than one set of results
         return results
     except pymysql.Error as e:
         print(f"Error calling GetWinPercentage: {e}")
@@ -278,7 +276,7 @@ def get_percentage_wins(team1_id, team2_id):
 def delete_tournament(tournament_id):
     connection, cursor = _open_sql_connection()
     cursor.execute("DELETE FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
-    connection.commit()  # Make sure to commit the transaction
+    connection.commit()
     connection.close()
 
 

@@ -47,14 +47,12 @@ const [equipeId, equipeNom, pays, entraineurPrincipal, stadeDomicile, trophees, 
   return Array.from(teamsMap.values());
 };
 const fetchTeamsFromServer = async () => {
-  console.log("Fetching teams from server...");
   try {
     const response = await fetch('http://localhost:5000/equipes_and_players');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Teams fetched successfully:", data.teams);
     equipes.value = processTeamsData(data.teams);
   } catch (error) {
     console.error('Error fetching teams:', error);
