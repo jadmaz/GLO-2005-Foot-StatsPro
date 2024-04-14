@@ -56,6 +56,8 @@ def select_teams():
     } for row in cursor.fetchall()]
     connection.close()
     return teams
+
+
 def select_team_by_id(id):
     connection, cursor = _open_sql_connection()
     query = "SELECT nom, pays, entraineur_principal, stade_domicile, trophee FROM Equipe WHERE equipe_id = %s"
@@ -185,6 +187,8 @@ def fetch_match_results(tournament_id):
         "winner": row[3]
     } for row in results]
     return match_results
+
+
 def update_winner_in_tournament_table(tournament_id, winner_id):
     try:
 
@@ -204,6 +208,7 @@ def update_winner_in_tournament_table(tournament_id, winner_id):
         print(f"Winner updated in tournament {tournament_id} to {winner_id}")
     except Exception as e:
         raise ValueError(f"Failed to update winner in tournament table: {str(e)}")
+
 
 def select_tournament_by_id(tournament_id):
     connection, cursor = _open_sql_connection()
@@ -239,7 +244,6 @@ def select_standings():
     return standings
 
 
-
 def update_classement_table(winner_id, loser_id):
     # Logic to update the Classement table
     connection, cursor = _open_sql_connection()
@@ -249,15 +253,38 @@ def update_classement_table(winner_id, loser_id):
                    (loser_id,))
 
 
+def get_percentage_wins(team1_id, team2_id):
+    connection, cursor = _open_sql_connection()
+    try:
+        # Prepare and execute the stored procedure call with input parameters
+        cursor.callproc('GetWinPercentage', [team1_id, team2_id])
+
+        # Fetch the result set
+        results = cursor.fetchall()
+
+        # Close cursor and connection
+        cursor.close()
+        connection.close()
+
+        # Assuming the procedure might return more than one set of results
+        return results
+    except pymysql.Error as e:
+        print(f"Error calling GetWinPercentage: {e}")
+        cursor.close()
+        connection.close()
+        return None
+
+
 def delete_tournament(tournament_id):
     connection, cursor = _open_sql_connection()
     cursor.execute("DELETE FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
     connection.commit()  # Make sure to commit the transaction
     connection.close()
 
+
 def select_players(position):
     connection, cursor = _open_sql_connection()
-    if position == "None" or position == "undefined" :
+    if position == "None" or position == "undefined":
         query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
                 E.equipe_id, E.nom AS equipe_nom
                 FROM Joueur J
@@ -270,7 +297,7 @@ def select_players(position):
             'position': row[3],
             'equipe_nom': row[6]
         } for row in cursor.fetchall()]
-    else :
+    else:
         query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
                 E.equipe_id, E.nom AS equipe_nom
                 FROM Joueur J

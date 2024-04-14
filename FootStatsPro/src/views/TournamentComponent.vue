@@ -20,7 +20,7 @@
         <div class="form-group">
           <label for="teamCount">Nombre d'équipes:</label>
           <select id="teamCount" v-model="newTournament.teamCount" required>
-            <option v-for="count in [2, 4, 8, 16, 32]" :key="count" :value="count">{{ count }}</option>
+            <option v-for="count in [2, 4, 8, 16]" :key="count" :value="count">{{ count }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -93,7 +93,7 @@
       <p>Du {{ new Date(selectedTournament[4]).toLocaleDateString() }} au {{ new Date(selectedTournament[5]).toLocaleDateString() }}</p>
       <p>{{ selectedTournament[3] }} équipes</p>
       <p>Lieu: {{ selectedTournament[2] }}</p>
-  <p v-if="selectedTournament[6]">Gagnant: {{ winnerName.nom }}</p>
+  <p v-if="selectedTournament[6] && winnerName">Gagnant: {{ winnerName.nom }}</p>
       <p v-else>Pas encore de gagnant</p>
     </header>
   </div>
@@ -355,7 +355,6 @@ const playMatch = async (match) => {
       await updateStandings(visitorTeamId, homeTeamId)
     }
 };
-
 
 const updateStandings = async (winnerId, loserId) => {
   try {

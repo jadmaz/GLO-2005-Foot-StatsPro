@@ -4,6 +4,7 @@ from flask_cors import CORS
 from Flask.serverFunctions import organize_tournament, update_bracket_with_results
 from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, select_players
 from database import insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, update_classement_table, select_standings, update_winner_in_tournament_table, select_team_by_id
+from database import insert_tournaments, select_tournaments, delete_tournament, select_teams_and_players, select_teams, insert_match, select_matches, update_match_result, fetch_match_results, select_tournament_by_id, update_classement_table, select_standings, update_winner_in_tournament_table, select_team_by_id, get_percentage_wins
 
 
 app = Flask(__name__)
@@ -48,6 +49,7 @@ def get_teams():
     teams = select_teams()
     return jsonify({"teams": teams})
 
+
 @app.route("/equipe/<int:id>", methods=['GET'])
 def get_team_by_id(id):
     team = select_team_by_id(id)
@@ -55,6 +57,13 @@ def get_team_by_id(id):
         return jsonify({"team": team})
     else:
         return jsonify({"message": "Équipe non trouvée"}), 404
+
+
+@app.route("/classement/fetchpercentage/<int:team1_id>/<int:team2_id>", methods=['GET'])
+def get_classements_percentage(team1_id, team2_id):
+    results = get_percentage_wins(team1_id, team2_id)
+    return jsonify(results)
+
 @app.route("/equipes_and_players", methods=['GET'])
 def get_teams_and_players():
     teams = select_teams_and_players()

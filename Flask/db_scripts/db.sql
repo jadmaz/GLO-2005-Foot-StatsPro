@@ -2,13 +2,14 @@ CREATE DATABASE IF NOT EXISTS FootProStats_bd;
 USE FootProStats_bd;
 
 
-CREATE TABLE IF NOT EXISTS Equipe (
-    equipe_id INT PRIMARY KEY,
-    nom VARCHAR(255),
-    pays VARCHAR(100),
+CREATE TABLE IF NOT EXISTS Equipe
+(
+    equipe_id            INT PRIMARY KEY,
+    nom                  VARCHAR(255),
+    pays                 VARCHAR(100),
     entraineur_principal VARCHAR(255),
-    stade_domicile VARCHAR(255),
-    trophee INT DEFAULT 0
+    stade_domicile       VARCHAR(255),
+    trophee              INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Joueur (
@@ -214,11 +215,39 @@ INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
 ('Sadio Mané', 30, 'Forward', 5),
 ('Andrew Robertson', 27, 'Defender', 5);
 
-INSERT INTO Partie (date, lieu, resultat, equipe_locale_id, equipe_visiteur_id) VALUES
-('2024-05-21', 'Camp Nou', '2-1', 1, 2),
-('2024-05-22', 'Santiago Bernabeu', '0-0', 2, 3),
-('2024-05-23', 'Parc des Princes', '3-2', 3, 4),
-('2024-05-24', 'Etihad Stadium', '1-4', 4, 5);
+-- Inserts pour l'équipe avec l'ID 6
+INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
+('Lucas Martinez', 23, 'Defender', 6),
+('Gabriel Silva', 21, 'Midfielder', 6),
+('Marco Verratti', 28, 'Midfielder', 6),
+('Eduardo Lopez', 24, 'Forward', 6),
+('Sergio Ramos', 34, 'Defender', 6),
+('Antoine Dupont', 26, 'Goalkeeper', 6),
+('Julian Draxler', 27, 'Midfielder', 6),
+('Carlos Fierro', 22, 'Forward', 6);
+
+-- Inserts pour l'équipe avec l'ID 7
+INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
+('Nico Schulz', 27, 'Defender', 7),
+('Thiago Silva', 33, 'Defender', 7),
+('David Neres', 23, 'Forward', 7),
+('Arthur Melo', 24, 'Midfielder', 7),
+('Bernardo Silva', 25, 'Midfielder', 7),
+('Keylor Navas', 32, 'Goalkeeper', 7),
+('Felipe Caicedo', 31, 'Forward', 7),
+('Mason Mount', 22, 'Midfielder', 7);
+
+-- Inserts pour l'équipe avec l'ID 8
+INSERT INTO Joueur (nom, age, position, equipe_id) VALUES
+('Ivan Rakitic', 32, 'Midfielder', 8),
+('Jordi Alba', 31, 'Defender', 8),
+('Gianluigi Donnarumma', 22, 'Goalkeeper', 8),
+('Frenkie de Jong', 23, 'Midfielder', 8),
+('Ansu Fati', 18, 'Forward', 8),
+('Luis Suarez', 34, 'Forward', 8),
+('Gerard Pique', 33, 'Defender', 8),
+('Sergio Busquets', 32, 'Midfielder', 8);
+
 
 Insert Into Classement(saison, nombre_de_victoires, nombre_de_defaites, equipe_id)
 VALUES
@@ -239,6 +268,7 @@ VALUES
 ('2023/2024', 0, 0, 15),
 ('2023/2024', 0, 0, 16);
 
+
 DELIMITER //
 
 CREATE TRIGGER IncrementerTropheeAfterInsert
@@ -252,6 +282,67 @@ END//
 
 DELIMITER ;
 
+DELIMITER //
+
+CREATE PROCEDURE GetWinPercentage(team1_id INT, team2_id INT)
+BEGIN
+    DECLARE total_matches INT DEFAULT 0;
+    DECLARE team1_wins INT DEFAULT 0;
+    DECLARE team2_wins INT DEFAULT 0;
+    DECLARE team1_win_percentage DECIMAL(5,2);
+    DECLARE team2_win_percentage DECIMAL(5,2);
+
+    -- Create a temporary table to hold the results
+    CREATE TEMPORARY TABLE WinPercentage (
+        Team_ID INT,
+        Team_Name VARCHAR(255),
+        Win_Percentage DECIMAL(5,2)
+    );
+
+    -- Calcul du nombre total de matches entre les deux équipes
+    SELECT COUNT(*) INTO total_matches
+    FROM Partie
+    WHERE (equipe_locale_id = team1_id AND equipe_visiteur_id = team2_id)
+       OR (equipe_locale_id = team2_id AND equipe_visiteur_id = team1_id);
+
+    -- Calcul du nombre de victoires de team1
+    SELECT COUNT(*) INTO team1_wins
+    FROM Partie
+    WHERE ((equipe_locale_id = team1_id AND equipe_visiteur_id = team2_id AND winner = 'home')
+        OR (equipe_locale_id = team2_id AND equipe_visiteur_id = team1_id AND winner = 'away'));
+
+    -- Calcul du nombre de victoires de team2
+    SELECT COUNT(*) INTO team2_wins
+    FROM Partie
+    WHERE ((equipe_locale_id = team2_id AND equipe_visiteur_id = team1_id AND winner = 'home')
+        OR (equipe_locale_id = team1_id AND equipe_visiteur_id = team2_id AND winner = 'away'));
+
+    -- Calcul du pourcentage de victoire de team1
+    IF total_matches > 0 THEN
+        SET team1_win_percentage = (team1_wins / total_matches) * 100;
+        SET team2_win_percentage = (team2_wins / total_matches) * 100;
+    ELSE
+        SET team1_win_percentage = 0;
+        SET team2_win_percentage = 0;
+    END IF;
+
+    -- Insert the results into the temporary table
+    INSERT INTO WinPercentage (Team_ID, Team_Name, Win_Percentage)
+    VALUES (team1_id, (SELECT nom FROM Equipe WHERE equipe_id = team1_id), team1_win_percentage),
+           (team2_id, (SELECT nom FROM Equipe WHERE equipe_id = team2_id), team2_win_percentage);
+
+    -- Select from the temporary table to display the results
+    SELECT * FROM WinPercentage;
+
+    -- Drop the temporary table
+    DROP TEMPORARY TABLE WinPercentage;
+END//
+
+DELIMITER ;
+
+
+call GetWinPercentage(1, 2);
+
 
 SELECT * FROM Partie;
 SELECT * FROM Statistiques;
@@ -264,18 +355,18 @@ DROP TABLE Joueur;
 DROP TABLE Partie;
 DROP TABLE Classement;
 DROP TABLE tournoi;
+
 DROP TABLE Equipe;
 
-SELECT COUNT(*) FROM Joueur;
+drop database FootProStats_bd;
+DELIMITER $$
 
-    SELECT
-        E.equipe_id, E.nom AS equipe_nom, E.pays, E.entraineur_principal, E.stade_domicile,
-        J.joueur_id, J.nom AS joueur_nom, J.age, J.position
-    FROM
-        Equipe E
-    LEFT JOIN
-        Joueur J ON E.equipe_id = J.equipe_id
-    ORDER BY
-        E.equipe_id, J.joueur_id
+
+drop procedure GetWinPercentage;
+
+
+
+
+
 
 
