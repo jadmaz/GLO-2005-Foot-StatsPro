@@ -32,6 +32,7 @@ BEGIN
     CALL AssignGoalsToTeam(visitor_team_id, visitor_team_goals);
 
 END//
+DELIMITER ;
 CREATE PROCEDURE AssignGoalsToTeam(team_id INT, goals INT)
 BEGIN
     DECLARE goal_count INT;

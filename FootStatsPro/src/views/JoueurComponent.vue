@@ -2,18 +2,13 @@
 <div class="joueurs-container">
     <div class="filtres-container">
         <h2>
-          Recherche
+          Filtres
         </h2>
-        <input id="joeurs-search" type="text"  placeholder="Search joueurs"/>
-        <button type="button" onclick="onSearchClick()">Search</button>
-        <div id="search-container">
-
-        </div>
-      <h3>Filtres</h3>
         <div class="filtre-position">
-          <label for="choix">Postition :</label>
           <select @change="onSelectedPosition" name="position" id="choixPosition">
             <option value="None" selected></option>
+            <option value="buts">Buts</option>
+            <option value="passes">Passes</option>
             <option value="forward">Forward</option>
             <option value="midfielder">Midfielder</option>
             <option value="defender">Defender</option>
@@ -27,7 +22,11 @@
               <th>Nom</th>
               <th>Âge</th>
               <th>Position</th>
-              <th>Équipe ID</th>
+              <th>Équipe</th>
+              <th>Buts</th>
+              <th>Passes</th>
+              <th>Matchs</th>
+              <th>Ratio Buts/Match</th>
             </tr>
           </thead>
           <tbody>
@@ -36,7 +35,11 @@
               <td>{{ joueur.nom }}</td>
               <td>{{ joueur.age }}</td>
               <td>{{ joueur.position }}</td>
-              <td>{{ joueur.equipe_nom }}</td>
+              <td>{{ joueur.nom_equipe }}</td>
+              <td>{{joueur.total_buts}}</td>
+              <td>{{joueur.total_passes}}</td>
+              <td>{{joueur.nb_matchs}}</td>
+              <td>{{calculerRatio(joueur.total_buts, joueur.nb_matchs)}}</td>
             </tr>
           </tbody>
         </table>
@@ -51,6 +54,15 @@ import { onMounted, ref } from 'vue';
 
 const joueurs = ref([]);
 
+function calculerRatio(buts, match) {
+
+  if (match == 0) {
+    return 0;
+  }
+  else {
+    return (buts/match).toFixed(2);
+  }
+}
 
  const getJoueurs = async (position) => {
   try {
@@ -95,6 +107,24 @@ th {
 tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+select {
+    padding: 8px;
+    margin-top: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+}
+
+select:hover {
+    border-color: #888;
+}
+
+option {
+    padding: 10px;
+}
+
 
 
 </style>

@@ -280,6 +280,7 @@ END//
 
 DELIMITER ;
 
+
 DELIMITER //
 
 CREATE PROCEDURE GetWinPercentage(team1_id INT, team2_id INT)
@@ -348,6 +349,95 @@ FROM Equipe E
 JOIN Joueur J ON E.equipe_id = J.equipe_id;
 
 
+/*PROCEDURE AFIN DE GÉNÉRER LA BONNE REQUETE SQL POUR LE FILTRE DANS LA SECTION JOUEURS*/
+DELIMITER //
+CREATE PROCEDURE GetPlayerStatistics(IN position VARCHAR(255), OUT query TEXT)
+BEGIN
+    IF position = 'None' OR position = 'undefined' THEN
+        SET query = 'SELECT
+            J.joueur_id,
+            J.nom AS nom_joueur,
+            J.age,
+            J.position,
+            J.equipe_id,
+            E.nom AS nom_equipe,
+            S.buts_marques AS Total_Buts,
+            S.passes_decisives AS Total_Passes,
+            S.nb_matchs
+        FROM
+            Joueur J
+        JOIN Equipe E ON J.equipe_id = E.equipe_id
+        JOIN
+            Statistiques S ON J.joueur_id = S.joueur_id
+        GROUP BY
+            J.joueur_id, J.nom, J.age, J.position, J.equipe_id, E.nom, S.buts_marques, S.passes_decisives, S.nb_matchs
+        ORDER BY E.nom;';
+    ELSEIF position ='buts' THEN
+        SET query = 'SELECT
+            J.joueur_id,
+            J.nom AS nom_joueur,
+            J.age,
+            J.position,
+            J.equipe_id,
+            E.nom AS nom_equipe,
+            S.buts_marques AS Total_Buts,
+            S.passes_decisives AS Total_Passes,
+            S.nb_matchs
+        FROM
+            Joueur J
+        JOIN Equipe E ON J.equipe_id = E.equipe_id
+        JOIN
+            Statistiques S ON J.joueur_id = S.joueur_id
+        GROUP BY
+            J.joueur_id, J.nom, J.age, J.position, J.equipe_id, E.nom, S.buts_marques, S.passes_decisives, S.nb_matchs
+        ORDER BY S.buts_marques DESC;';
+    ELSEIF position = 'passes' THEN
+        SET query = '
+        SELECT
+            J.joueur_id,
+            J.nom AS nom_joueur,
+            J.age,
+            J.position,
+            J.equipe_id,
+            E.nom AS nom_equipe,
+            S.buts_marques AS Total_Buts,
+            S.passes_decisives AS Total_Passes,
+            S.nb_matchs
+        FROM
+            Joueur J
+        JOIN Equipe E ON J.equipe_id = E.equipe_id
+        JOIN
+            Statistiques S ON J.joueur_id = S.joueur_id
+        GROUP BY
+            J.joueur_id, J.nom, J.age, J.position, J.equipe_id, E.nom, S.buts_marques, S.passes_decisives, S.nb_matchs
+        ORDER BY S.passes_decisives DESC;';
+    ELSE
+        SET query = CONCAT('
+        SELECT
+            J.joueur_id,
+            J.nom AS nom_joueur,
+            J.age,
+            J.position,
+            J.equipe_id,
+            E.nom AS nom_equipe,
+            S.buts_marques AS Total_Buts,
+            S.passes_decisives AS Total_Passes,
+            S.nb_matchs
+        FROM
+            Joueur J
+        JOIN Equipe E ON J.equipe_id = E.equipe_id
+        JOIN
+            Statistiques S ON J.joueur_id = S.joueur_id
+        WHERE J.position = ''', position, '''
+        GROUP BY
+            J.joueur_id, J.nom, J.age, J.position, J.equipe_id, E.nom, S.buts_marques, S.passes_decisives, S.nb_matchs
+        ORDER BY E.nom;');
+    end if;
+end //
+DELIMITER ;
+
+
+
 SELECT * FROM Partie;
 SELECT * FROM Statistiques;
 SELECT * FROM Equipe;
@@ -367,3 +457,4 @@ DELIMITER $$
 
 
 drop procedure GetWinPercentage;
+DROP PROCEDURE GetPlayerStatistics;

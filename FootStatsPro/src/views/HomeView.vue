@@ -7,6 +7,7 @@
         <router-link to="/classement" class="intro-link">Voir les Classements</router-link>
         <router-link to="/tournoi" class="intro-link">Explorer les Tournois</router-link>
         <router-link to="/equipe" class="intro-link">Découvrir les Équipes</router-link>
+        <router-link to="/joueur/" class="intro-link">Consulter les Statistiques</router-link>
       </div>
     </section>
     <section class="mission">
