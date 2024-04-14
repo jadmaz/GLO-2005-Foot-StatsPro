@@ -9,7 +9,7 @@ def _open_sql_connection():
     host = os.environ.get("HOST")
     port = int(os.environ.get("PORT"))
     database = os.environ.get("DATABASE")
-    user = os.environ.get("USER")
+    user = os.environ.get("USERNAME")
     password = os.environ.get("PASSWORD")
 
     connection = pymysql.connect(
@@ -254,6 +254,39 @@ def delete_tournament(tournament_id):
     cursor.execute("DELETE FROM tournoi WHERE tournoi_id = %s", (tournament_id,))
     connection.commit()  # Make sure to commit the transaction
     connection.close()
+
+def select_players(position):
+    connection, cursor = _open_sql_connection()
+    if position == "None" or position == "undefined" :
+        query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
+                E.equipe_id, E.nom AS equipe_nom
+                FROM Joueur J
+                LEFT JOIN Equipe E ON J.equipe_id = E.equipe_id;""")
+        cursor.execute(query)
+        players = [{
+            'joueur_id': row[0],
+            'nom': row[1],
+            'age': row[2],
+            'position': row[3],
+            'equipe_nom': row[6]
+        } for row in cursor.fetchall()]
+    else :
+        query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
+                E.equipe_id, E.nom AS equipe_nom
+                FROM Joueur J
+                LEFT JOIN Equipe E ON J.equipe_id = E.equipe_id
+                WHERE J.position = %s;""")
+        cursor.execute(query, (position,))
+        players = [{
+            'joueur_id': row[0],
+            'nom': row[1],
+            'age': row[2],
+            'position': row[3],
+            'equipe_nom': row[6]
+        } for row in cursor.fetchall()]
+
+    connection.close()
+    return players
 
 
 if __name__ == '__main__':

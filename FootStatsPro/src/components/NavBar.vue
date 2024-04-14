@@ -14,6 +14,9 @@
       <li>
         <router-link to="/equipe">Équipe</router-link>
       </li>
+      <li>
+        <router-link to="/joueur">Joueur</router-link>
+      </li>
     </ul>
   </nav>
 </template>
