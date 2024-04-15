@@ -299,6 +299,34 @@ def select_players(position):
         'total_passes': row[7],
         'nb_matchs': row[8]
     } for row in cursor.fetchall()]
+    if position == "None" or position == "undefined":
+        query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
+                E.equipe_id, E.nom AS equipe_nom
+                FROM Joueur J
+                LEFT JOIN Equipe E ON J.equipe_id = E.equipe_id
+                LEFT JOIN Statistiques S ON J.joueur_id = S.joueur_id;""")
+        cursor.execute(query)
+        players = [{
+            'joueur_id': row[0],
+            'nom': row[1],
+            'age': row[2],
+            'position': row[3],
+        } for row in cursor.fetchall()]
+    else:
+        query = ("""SELECT J.joueur_id, J.nom AS joueur_nom, J.age, J.position, J.equipe_id,
+                E.equipe_id, E.nom AS equipe_nom
+                FROM Joueur J
+                LEFT JOIN Equipe E ON J.equipe_id = E.equipe_id
+                LEFT JOIN Statistiques S ON J.joueur_id = S.joueur_id
+                WHERE J.position = %s;""")
+        cursor.execute(query, (position,))
+        players = [{
+            'joueur_id': row[0],
+            'nom': row[1],
+            'age': row[2],
+            'position': row[3]
+        } for row in cursor.fetchall()]
+
     connection.close()
     return players
 

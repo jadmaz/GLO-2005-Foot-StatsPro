@@ -34,7 +34,7 @@
     </form>
 
     <div v-if="Object.keys(bracket).length">
-      <h2>Bracket Structure</h2>
+      <h2>Structure du bracket</h2>
       <div class="bracket" :key="updateKey">
         <div v-for="(matches, roundName) in bracket" :key="roundName">
           <template v-if="roundName === 'Winner' && winner">
@@ -55,25 +55,25 @@
                   <div class="vs">vs</div>
                   <div class="team">{{ match[1]?.nom || 'TBD' }}</div>
                   <button v-if="match[0] && match[1] && !match.played" @click="playMatch(match)">
-                    Play
+                    Jouer
                   </button>
                 </div>
               </div>
-              <div v-if="!matches.length">No matches scheduled for {{ roundName }}</div>
+              <div v-if="!matches.length">Aucun match prévu pour les {{ roundName }}</div>
             </div>
             <button
               v-if="matches.length && roundName !== 'Final'"
               @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
               class="generate-next-round"
             >
-              Generate Next Round
+              Généré la prochaine partie
             </button>
             <button
               v-if="matches.length && roundName === 'Final'"
               @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
               class="generate-next-round"
             >
-              Conclude Tournament
+              Finir le tournoi
             </button>
           </template>
           </div>
@@ -123,7 +123,28 @@ const matches = ref([]);
 const cities = ref([
   { name: 'Tokyo', country: 'Japan' },
   { name: 'New York City', country: 'USA' },
-  { name: 'Paris', country: 'France' }
+  { name: 'Paris', country: 'France' },
+  { name: 'Los Angeles', country: 'USA' },
+  { name: 'Paris', country: 'France' },
+  { name: 'Moscow', country: 'Russia' },
+  { name: 'Istanbul', country: 'Turkey' },
+  { name: 'Dubai', country: 'United Arab Emirates' },
+  { name: 'Seoul', country: 'South Korea' },
+  { name: 'Beijing', country: 'China' },
+  { name: 'London', country: 'United Kingdom' },
+  { name: 'Mexico City', country: 'Mexico' },
+  { name: 'Bangkok', country: 'Thailand' },
+  { name: 'New Delhi', country: 'India' },
+  { name: 'Cairo', country: 'Egypt' },
+  { name: 'Osaka', country: 'Japan' },
+  { name: 'Rio de Janeiro', country: 'Brazil' },
+  { name: 'Casablanca', country: 'Morocco' },
+  { name: 'Algiers', country: 'Algeria' },
+  { name: 'Montreal', country: 'Canada' },
+  { name: 'Riyadh', country: 'Saudi Arabia' },
+  { name: 'Doha', country: 'Qatar' },
+  {name: 'Brussels', country: 'Belgium' },
+
 ]);
 const showDeleteButton = ref(false);
 const selectedTournament = ref(null);
@@ -318,20 +339,20 @@ const playMatch = async (match) => {
   let visitorTeamScore = "";
 
   while (homeTeamScore === visitorTeamScore) {
-    homeTeamScore = prompt(`Enter score for ${match[0].nom}:`);
+    homeTeamScore = prompt(`Entrer le score pour ${match[0].nom}:`);
 
     while (isNaN(homeTeamScore)) {
-      homeTeamScore = prompt("Please enter a valid score for the home team (a number):");
+      homeTeamScore = prompt("Veuillez entrer un score valide pour l'équipe locale (un nombre):");
     }
 
     visitorTeamScore = prompt(`Enter score for ${match[1].nom}:`);
 
     while (isNaN(visitorTeamScore)) {
-      visitorTeamScore = prompt("Please enter a valid score for the visitor team (a number):");
+      visitorTeamScore = prompt("Veuillez entrer un score valide pour l'équipe visiteure (un nombre):");
     }
 
     if (homeTeamScore === visitorTeamScore) {
-      alert("Scores cannot be equal. Please enter different scores.");
+      alert("Il ne peut pas y avoir d'égalités. Veuillez rentrer un nouveau score");
     }
 
   }

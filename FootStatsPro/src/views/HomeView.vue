@@ -75,7 +75,7 @@ export default {
 }
 
 .intro-link {
-  background-color: #007bff;
+  background-color: #00802b;
   color: white;
   text-decoration: none;
   padding: 0.5rem 1rem;
@@ -84,7 +84,7 @@ export default {
 }
 
 .intro-link:hover {
-  background-color: #0056b3;
+  background-color: #005f1f;
 }
 
 .mission {
@@ -106,11 +106,11 @@ export default {
   line-height: 1.6;
   text-align: justify;
 }
-/* Features Section */
+
 .features {
   text-align: center;
   padding: 2rem;
-  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
 }
 .feature-list {
   display: flex;

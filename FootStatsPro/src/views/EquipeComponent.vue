@@ -29,7 +29,7 @@ const [equipeId, equipeNom, pays, entraineurPrincipal, stadeDomicile, trophees, 
     nom: equipeNom,
     pays: pays,
     entraineurPrincipal: entraineurPrincipal,
-    trophees: trophees, // Utilisez "trophees" au lieu de "trophee"
+    trophees: trophees,
     stadeDomicile: stadeDomicile,
     joueurs: [],
   });
