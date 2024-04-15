@@ -188,6 +188,7 @@ def fetch_match_results(tournament_id):
     } for row in results]
     return match_results
 
+
 def get_team_name_by_id(team_id):
     connection, cursor = _open_sql_connection()
     query = "SELECT nom FROM Equipe WHERE equipe_id = %s"
@@ -200,6 +201,7 @@ def get_team_name_by_id(team_id):
         return team_name[0]
     else:
         return None
+
 
 def update_winner_in_tournament_table(tournament_id, winner_id):
     try:
@@ -333,4 +335,3 @@ def select_players(position):
 
 if __name__ == '__main__':
     select_tournaments()
-

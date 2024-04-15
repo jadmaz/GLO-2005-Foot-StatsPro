@@ -6,43 +6,35 @@ from random import shuffle
 
 
 def organize_tournament(tournament_id, number_of_teams):
-    print(f"Organizing tournament {tournament_id} for {number_of_teams} teams.")
 
     # Check if the number of teams is valid for a bracket
-    valid_team_numbers = [2, 4, 8, 16, 32]  # Ensure this matches with your available bracket structure
+    valid_team_numbers = [2, 4, 8, 16]  # Ensure this matches with your available bracket structure
     if number_of_teams not in valid_team_numbers:
         raise ValueError("Invalid number of teams for a bracket")
 
     teams = select_teams()
-    print(f"Retrieved {len(teams)} teams from the database.")
 
-    # Raise an error if there are not enough teams
     if len(teams) < number_of_teams:
         raise ValueError("Not enough teams available for the bracket")
 
     bracket_structure = initialize_bracket_structure(number_of_teams)
-    print(f"Bracket structure initialized with rounds: {list(bracket_structure.keys())}")
 
-    # Get the first round name from the bracket structure
     first_round_name = next(iter(bracket_structure))
-    print("first_round_name", first_round_name)
-    first_round_matches = generate_first_round_matches(teams[:number_of_teams])
-    print(f"First round matches: {first_round_matches}")
 
-    # Assign matches to the first round in the bracket structure
+    first_round_matches = generate_first_round_matches(teams[:number_of_teams])
+
     bracket_structure[first_round_name].extend(first_round_matches)
     print("avant le retour:", bracket_structure)
     return bracket_structure
 
 
 def initialize_bracket_structure(number_of_teams):
-    # Cette fonction retournera une structure de brackets en fonction du nombre d'équipes.
+
     rounds_map = {
         2: ['Final'],
         4: ['Semifinals', 'Final'],
         8: ['Quarterfinals', 'Semifinals', 'Final'],
         16: ['16 de finale', 'Quarterfinals', 'Semifinals', 'Final'],
-        32: ['1/16 Finals', '16 de finale', 'Quarterfinals', 'Semifinals', 'Final'],
     }
     number_of_rounds = int(math.log2(number_of_teams))
 
@@ -68,7 +60,6 @@ def generate_first_round_matches(teams):
 
 
 def update_bracket_with_results(bracket_structure, match_results):
-    print("Starting update of the bracket with match results.")
     bracket_structure = reorder_bracket(bracket_structure)
     bracket_structure['Winner'] = None
 
@@ -85,7 +76,6 @@ def update_bracket_with_results(bracket_structure, match_results):
             advance_winners_to_next_round(winners, next_round_name, bracket_structure)
         elif not next_round_name and winners:
             bracket_structure['Winner'] = winners[0]
-            print(f"Winner of the tournament is: {bracket_structure['Winner']}")
 
         bracket_structure[round_name] = []
 
@@ -99,7 +89,7 @@ def process_current_round(matches, match_results):
     for match in matches:
         home_team, away_team = match[0], match[1]
         print("home team", home_team)
-        print("away team", away_team)# We're assuming the first team is home and the second is away
+        print("away team", away_team)  # We're assuming the first team is home and the second is away
         # Find the match result that corresponds to the current match pair
         result = next((r for r in match_results
                        if r['home_team_id'] == home_team['id'] and r['away_team_id'] == away_team['id']), None)
@@ -110,11 +100,9 @@ def process_current_round(matches, match_results):
                 winners.append(home_team)
             else:
                 winners.append(away_team)
-          # Once the winner is found, no need to check further for this match
+        # Once the winner is found, no need to check further for this match
     print("Winners:", winners)
     return winners
-
-
 
 
 def advance_winners_to_next_round(winners, next_round_name, bracket_structure):
@@ -158,7 +146,7 @@ def reorder_bracket(bracket):
 
     print("Original bracket structure:", bracket)
 
-    predefined_order = ["1/16 Finals", "16 de finale", "Quarterfinals", "Semifinals", "Final", "Winner"]
+    predefined_order = ["16 de finale", "Quarterfinals", "Semifinals", "Final", "Winner"]
     ordered_round_names = [round for round in predefined_order if round in bracket]
 
     print("Predefined order of rounds:", predefined_order)
