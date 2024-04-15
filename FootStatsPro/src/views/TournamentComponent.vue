@@ -34,7 +34,7 @@
     </form>
 
     <div v-if="Object.keys(bracket).length">
-      <h2>Structure du bracket</h2>
+      <h2>Structure du tableau du tournoi</h2>
       <div class="bracket" :key="updateKey">
         <div v-for="(matches, roundName) in bracket" :key="roundName">
           <template v-if="roundName === 'Winner' && winner">
@@ -323,11 +323,9 @@ const createMatch = async (tournamentId, homeTeamId, visitorTeamId, round) => {
 };
 
 const playMatch = async (match) => {
-  // Assuming match is an array with two elements: [team1, team2]
   const homeTeamId = match[0].id;
   const visitorTeamId = match[1].id;
 
-  // Find the match in the matches.value array that involves both teams
   const foundMatch = matches.value.find(m =>
     (m.equipe_locale_id === homeTeamId && m.equipe_visiteur_id === visitorTeamId) ||
     (m.equipe_locale_id === visitorTeamId && m.equipe_visiteur_id === homeTeamId));

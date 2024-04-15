@@ -110,7 +110,7 @@ export default {
 .features {
   text-align: center;
   padding: 2rem;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid #005f1f;
 }
 .feature-list {
   display: flex;
@@ -133,7 +133,7 @@ export default {
 .testimonial {
   padding: 1rem;
   margin-bottom: 1rem;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid #005f1f;
   background-color: white;
 }
 </style>

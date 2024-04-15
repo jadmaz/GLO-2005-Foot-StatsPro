@@ -8,11 +8,10 @@ BEGIN
         UPDATE Equipe SET trophee = trophee + 1 WHERE equipe_id = NEW.gagnant;
     END IF;
 END//
-
 DELIMITER ;
-DELIMITER //
 
-CREATE TRIGGER AssignGoalsToPlayers
+DELIMITER //
+CREATE TRIGGER AssignGoalsAndAssistsToPlayers
 AFTER UPDATE ON Partie
 FOR EACH ROW
 BEGIN
@@ -27,13 +26,15 @@ BEGIN
     SET home_team_id = NEW.equipe_locale_id;
     SET visitor_team_id = NEW.equipe_visiteur_id;
 
-    CALL AssignGoalsToTeam(home_team_id, home_team_goals);
+    CALL AssignGoalsAndAssistsToTeam(home_team_id, home_team_goals);
 
-    CALL AssignGoalsToTeam(visitor_team_id, visitor_team_goals);
-
+    CALL AssignGoalsAndAssistsToTeam(visitor_team_id, visitor_team_goals);
 END//
 DELIMITER ;
-CREATE PROCEDURE AssignGoalsToTeam(team_id INT, goals INT)
+
+
+DELIMITER //
+CREATE PROCEDURE AssignGoalsAndAssistsToTeam(team_id INT, goals INT)
 BEGIN
     DECLARE goal_count INT;
     DECLARE player_count INT;
@@ -43,17 +44,18 @@ BEGIN
     SELECT COUNT(*) INTO player_count FROM Joueur WHERE equipe_id = team_id;
 
     SET goal_count = 0;
-    SET i = 0;
 
     WHILE goal_count < goals DO
         SET player_id = (SELECT joueur_id FROM Joueur WHERE equipe_id = team_id ORDER BY RAND() LIMIT 1);
 
         UPDATE Statistiques SET buts_marques = buts_marques + 1 WHERE joueur_id = player_id;
 
+        SET player_id = (SELECT joueur_id FROM Joueur WHERE equipe_id = team_id AND joueur_id != player_id ORDER BY RAND() LIMIT 1);
+        UPDATE Statistiques SET passes_decisives = passes_decisives + 1 WHERE joueur_id = player_id;
+
         SET goal_count = goal_count + 1;
     END WHILE;
-END;
-
+END//
 DELIMITER ;
 
 
