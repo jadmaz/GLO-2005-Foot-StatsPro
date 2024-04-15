@@ -77,10 +77,11 @@ def get_standings():
 @app.route("/create-match", methods=['POST'])
 def create_match():
     data = request.json
+    print("data", data)
     tournament_id = data['tournamentId']
     home_team_id = data['homeTeamId']
     visitor_team_id = data['visitorTeamId']
-
+    print(tournament_id, home_team_id, visitor_team_id)
     match_id = insert_match(tournament_id, home_team_id, visitor_team_id)
 
     return jsonify({"matchId": match_id}), 200

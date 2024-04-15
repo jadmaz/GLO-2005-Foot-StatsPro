@@ -62,14 +62,14 @@
               <div v-if="!matches.length">No matches scheduled for {{ roundName }}</div>
             </div>
             <button
-              v-if="matches.length && roundName !== 'Final'"
+              v-if="areAllMatchesPlayed(matches)&& matches.length && roundName !== 'Final'"
               @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
               class="generate-next-round"
             >
               Generate Next Round
             </button>
             <button
-              v-if="matches.length && roundName === 'Final'"
+              v-if="areAllMatchesPlayed(matches) && matches.length && roundName === 'Final'"
               @click="updateBracketWithMatchResults(currentTournamentId, bracket)"
               class="generate-next-round"
             >
@@ -115,7 +115,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-const knownRounds = ref(["1/16 Finals","16 de finale","Quarterfinals","Semifinals","Final", "Winner"]);
+const knownRounds = ref(["16 de finale","Quarterfinals","Semifinals","Final", "Winner"]);
 const updateKey = ref(0);
 const tournaments = ref([]);
 const teams = ref([]);
@@ -139,6 +139,10 @@ const newTournament = ref({
   teamCount: 0,
   location: ''
 });
+
+const areAllMatchesPlayed = (matches) => {
+  return matches.every(match => match.played);
+};
 
 const addTournament = async () => {
   if (
